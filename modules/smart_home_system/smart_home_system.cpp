@@ -4,6 +4,7 @@
 
 #include "smart_home_system.h"
 
+/*
 #include "alarm.h"
 #include "user_interface.h"
 #include "fire_alarm.h"
@@ -17,16 +18,21 @@
 #include "audio.h"
 #include "sd_card.h"
 #include "ble_com.h"
-#include "non_blocking_delay.h"
+
 #include "wifi_com.h"
+*/
+#include "non_blocking_delay.h"
+
 
 //=====[Declaration of private defines]========================================
-
+#define DELAY_2_SECONDS         2000
 //=====[Declaration of private data types]=====================================
 
 //=====[Declaration and initialization of public global objects]===============
 
-static nonBlockingDelay_t smartHomeSystemDelay;
+nonBlockingDelay_t smartHomeSystemDelay;
+DigitalOut LED (LED2);
+DigitalOut LED_2 (LED3);
 
 //=====[Declaration of external public global variables]=======================
 
@@ -40,35 +46,42 @@ static nonBlockingDelay_t smartHomeSystemDelay;
 
 void smartHomeSystemInit()
 {
+    LED = ON;
+    LED_2 = ON;
     tickInit();
-    audioInit();
+    /*
+    //audioInit();
     userInterfaceInit();
     alarmInit();
-    fireAlarmInit();
+    //fireAlarmInit();
     intruderAlarmInit();
     pcSerialComInit();
     motorControlInit();
     gateInit();
-    lightSystemInit();
+    // lightSystemInit();
     sdCardInit();
     wifiComInit();
-    nonBlockingDelayInit( &smartHomeSystemDelay, SYSTEM_TIME_INCREMENT_MS );
+    */
+    nonBlockingDelayInit( &smartHomeSystemDelay, DELAY_2_SECONDS  );
 }
 
 void smartHomeSystemUpdate()
 {
     if( nonBlockingDelayRead(&smartHomeSystemDelay) ) {
+     /*
         userInterfaceUpdate();
-        fireAlarmUpdate();
+      //  fireAlarmUpdate();
         intruderAlarmUpdate();
-        alarmUpdate();
+       // alarmUpdate();
         eventLogUpdate();
         pcSerialComUpdate();
-        motorControlUpdate();
+        // motorControlUpdate();
         lightSystemUpdate();
         bleComUpdate();
+       */ 
+        LED = !LED;
     }    
-    wifiComUpdate();
+   //wifiComUpdate();
 }
 
 //=====[Implementations of private functions]==================================

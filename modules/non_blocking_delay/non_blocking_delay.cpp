@@ -26,7 +26,7 @@ tick_t tickRead();
 
 void tickInit()
 {
-    ticker.attach( tickerCallback, ((float) 0.001 ));
+    ticker.attach( tickerCallback, 1ms );
 }
 
 void nonBlockingDelayInit( nonBlockingDelay_t * delay, tick_t durationValue )
