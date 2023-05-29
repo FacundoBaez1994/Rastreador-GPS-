@@ -1,19 +1,22 @@
 //=====[#include guards - begin]===============================================
 
-#ifndef _SMART_HOME_SYSTEM_H_
-#define _SMART_HOME_SYSTEM_H_
+#ifndef _TRACKER_GPS_H_
+#define _TRACKER_GPS_H_
 
 //=====[Declaration of public defines]=========================================
 
-#define SYSTEM_TIME_INCREMENT_MS   10
 
 //=====[Declaration of public data types]======================================
 
-//=====[Declarations (prototypes) of public functions]=========================
+//=====[Declaration of public classes]=========================
+class trackerGPS {
+public:
+    trackerGPS ();
+    void trackerGPSUpdate();
+private:
+};
 
-void smartHomeSystemInit();
-void smartHomeSystemUpdate();
 
 //=====[#include guards - end]=================================================
 
-#endif // _SMART_HOME_SYSTEM_H_
+#endif // _TRACKER_GPS_H_

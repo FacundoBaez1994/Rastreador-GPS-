@@ -29,4 +29,4 @@ void nonBlockingDelayWrite( nonBlockingDelay_t* delay, tick_t durationValue );
 
 //=====[#include guards - end]=================================================
 
-#endif // _NON_BLOCKING_DELAY_H_
+#endif // _NON_BLOCKING_DELAY_H

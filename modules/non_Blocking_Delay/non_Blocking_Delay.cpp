@@ -1,6 +1,6 @@
 //=====[Libraries]=============================================================
 
-#include "non_blocking_delay.h"
+#include "non_Blocking_Delay.h"
 
 //=====[Declaration of private defines]========================================
 
@@ -31,8 +31,9 @@ void tickInit()
 
 void nonBlockingDelayInit( nonBlockingDelay_t * delay, tick_t durationValue )
 {
-   delay->duration = durationValue;
-   delay->isRunning = false;
+    tickInit ();
+    delay->duration = durationValue;
+    delay->isRunning = false;
 }
 
 bool nonBlockingDelayRead( nonBlockingDelay_t * delay )

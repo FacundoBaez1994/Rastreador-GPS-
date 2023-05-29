@@ -1,13 +1,13 @@
 //=====[Libraries]=============================================================
 
-#include "smart_home_system.h"
+#include "tracker_GPS.h"
 
 //=====[Main function, the program entry point after power on or reset]========
 
 int main()
 {
-    smartHomeSystemInit();
+    trackerGPS tracker;
     while (true) {
-        smartHomeSystemUpdate();
+        tracker.trackerGPSUpdate();
     }
 }

@@ -1,17 +1,21 @@
 //=====[Libraries]=============================================================
 
 #include "arm_book_lib.h"
+#include "tracker_GPS.h"
 
-#include "smart_home_system.h"
-#include "light_level_control.h"
+
+#include "non_Blocking_Delay.h"
 
 //=====[Declaration of private defines]========================================
+#define DELAY_2_SECONDS         2000
 
 //=====[Declaration of private data types]=====================================
 
 //=====[Declaration and initialization of public global objects]===============
 
-AnalogIn potentiometer(A0);
+nonBlockingDelay_t smartHomeSystemDelay;
+DigitalOut LED (LED2);
+DigitalOut LED_2 (LED3);
 
 //=====[Declaration of external public global variables]=======================
 
@@ -21,15 +25,21 @@ AnalogIn potentiometer(A0);
 
 //=====[Declarations (prototypes) of private functions]========================
 
-//=====[Implementations of public functions]===================================
+//=====[Implementations of public methods]===================================
 
-void lightLevelControlInit() { }
-
-void lightLevelControlUpdate() { }
-
-float lightLevelControlRead()
+trackerGPS::trackerGPS ()
 {
-    return potentiometer.read();
+    LED = ON;
+    LED_2 = ON;
+    nonBlockingDelayInit( &smartHomeSystemDelay, DELAY_2_SECONDS  );
 }
 
-//=====[Implementations of private functions]==================================
+void trackerGPS::trackerGPSUpdate ()
+{
+    if( nonBlockingDelayRead(&smartHomeSystemDelay) ) {
+        LED = !LED;
+    }    
+   //wifiComUpdate();
+}
+
+//=====[Implementations of private methods]==================================
