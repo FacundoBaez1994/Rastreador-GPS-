@@ -8,6 +8,6 @@ int main()
 {
     trackerGPS tracker;
     while (true) {
-        tracker.trackerGPSUpdate();
+        tracker.update();
     }
 }

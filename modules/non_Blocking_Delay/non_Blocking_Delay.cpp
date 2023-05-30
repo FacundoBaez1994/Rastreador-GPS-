@@ -37,7 +37,7 @@ nonBlockingDelay::nonBlockingDelay (tick_t durationValue )
     this->isRunning = false;
 }
 
-bool nonBlockingDelay::nonBlockingDelayRead (void)
+bool nonBlockingDelay::read (void)
 {
    bool timeArrived = false;
    tick_t elapsedTime;
@@ -56,7 +56,7 @@ bool nonBlockingDelay::nonBlockingDelayRead (void)
    return timeArrived;
 }
 
-void nonBlockingDelay::nonBlockingDelayWrite( tick_t durationValue )
+void nonBlockingDelay::write( tick_t durationValue )
 {
    this->duration = durationValue;
 }

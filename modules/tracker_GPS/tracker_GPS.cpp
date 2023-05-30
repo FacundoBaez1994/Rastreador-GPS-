@@ -13,7 +13,7 @@
 
 //=====[Declaration and initialization of public global objects]===============
 
-nonBlockingDelay_t smartHomeSystemDelay;
+nonBlockingDelay latency ( DELAY_2_SECONDS);
 DigitalOut LED (LED2);
 DigitalOut LED_2 (LED3);
 
@@ -31,12 +31,11 @@ trackerGPS::trackerGPS ()
 {
     LED = ON;
     LED_2 = ON;
-    nonBlockingDelayInit( &smartHomeSystemDelay, DELAY_2_SECONDS  );
 }
 
-void trackerGPS::trackerGPSUpdate ()
+void trackerGPS::update ()
 {
-    if( nonBlockingDelayRead(&smartHomeSystemDelay) ) {
+    if( latency.read() ) {
         LED = !LED;
     }    
    //wifiComUpdate();

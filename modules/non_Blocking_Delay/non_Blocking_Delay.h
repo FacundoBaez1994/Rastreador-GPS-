@@ -17,8 +17,8 @@ public:
 
 //=====[Declaration of public methods]=========================================
     nonBlockingDelay ( tick_t durationValue);
-    bool nonBlockingDelayRead( void );
-    void nonBlockingDelayWrite(  tick_t durationValue );
+    bool read( void );
+    void write(  tick_t durationValue );
 
 private:
 //=====[Declaration of privates atributes]=========================================

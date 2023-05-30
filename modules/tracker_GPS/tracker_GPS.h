@@ -12,7 +12,7 @@
 class trackerGPS {
 public:
     trackerGPS ();
-    void trackerGPSUpdate();
+    void update();
 private:
 };
 
