@@ -14,55 +14,61 @@
 
 //=====[Declaration and initialization of private global variables]============
 
-static Ticker ticker;
-static tick_t tickCounter;
+static tick_t tickCounter = 0;
+
 
 //=====[Declarations (prototypes) of private functions]========================
 
 void tickerCallback();
 tick_t tickRead();
 
-//=====[Implementations of public functions]===================================
-
-void tickInit()
+//=====[Implementations of private methods]===================================
+void nonBlockingDelay::tickInit()
 {
-    ticker.attach( tickerCallback, 1ms );
+    this->ticker.attach( tickerCallback, 1ms );
 }
 
-void nonBlockingDelayInit( nonBlockingDelay_t * delay, tick_t durationValue )
+//=====[Implementations of public methods]===================================
+
+nonBlockingDelay::nonBlockingDelay (tick_t durationValue )
 {
-    tickInit ();
-    delay->duration = durationValue;
-    delay->isRunning = false;
+    this->tickInit ();
+    this->duration = durationValue;
+    this->isRunning = false;
 }
 
-bool nonBlockingDelayRead( nonBlockingDelay_t * delay )
+bool nonBlockingDelay::nonBlockingDelayRead (void)
 {
    bool timeArrived = false;
    tick_t elapsedTime;
 
-   if( !delay->isRunning ) {
-      delay->startTime = tickCounter;
-      delay->isRunning = true;
+   if( !this->isRunning ) {
+      this->startTime = tickCounter;
+      this->isRunning = true;
    } else {
-      elapsedTime = tickCounter - delay->startTime;
-      if ( elapsedTime >= delay->duration ) {
+      elapsedTime = tickCounter - this->startTime;
+      if ( elapsedTime >= this->duration ) {
          timeArrived = true;
-         delay->isRunning = false;
+         this->isRunning = false;
       }
    }
 
    return timeArrived;
 }
 
-void nonBlockingDelayWrite( nonBlockingDelay_t * delay, tick_t durationValue )
+void nonBlockingDelay::nonBlockingDelayWrite( tick_t durationValue )
 {
-   delay->duration = durationValue;
+   this->duration = durationValue;
 }
 
 //=====[Implementations of private functions]==================================
-
+// ISR cannot form part of the class
 void tickerCallback( void ) 
 {
     tickCounter++;
+}
+
+tick_t tickRead()
+{
+    return tickCounter;
 }
