@@ -11,7 +11,7 @@
 typedef enum {
     GSM_GPRS_STATE_INIT,
     GSM_GPRS_STATE_AT,
-} GsmGprsComState_t;
+} gsmGprsComState_t;
 //=====[Declaration of public data types]======================================
 
 //=====[Declarations (prototypes) of public functions]=========================
@@ -19,14 +19,16 @@ typedef enum {
 //=====[Declaration of public classes]=========================
 class gsmGprsCom {
 public:
-    gsmGprsCom ();
-    void conect ();
+    gsmGprsCom (UnbufferedSerial * uartGsmGprs);
+    void connect ();
     void send (char * mensaje);
     // char* recv (char * mensaje);
-    void disconect ();
+    void disconnect ();
 private:
-    GsmGprsComState_t GsmGprsCom;
-    UnbufferedSerial  uartGsmGprs;
+    gsmGprsComState_t gsmGprsComState;
+    UnbufferedSerial* uartGsmGprs;
+
+    void write( const char* str );
 };
 
 //=====[#include guards - end]=================================================

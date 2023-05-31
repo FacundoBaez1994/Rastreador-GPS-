@@ -25,7 +25,7 @@ private:
     tick_t startTime;
     tick_t duration;
     bool isRunning;
-    static Ticker ticker;
+    Ticker ticker;
 
 //=====[Declaration of privates methods]=========================================
     void tickInit();
