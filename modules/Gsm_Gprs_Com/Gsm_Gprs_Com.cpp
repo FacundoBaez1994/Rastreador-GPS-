@@ -11,6 +11,7 @@
 
 
 //=====[Declaration of private defines]========================================
+#define REFRESH_TIME_10MS         10
 
 //=====[Declaration of private data types]=====================================
 
@@ -20,7 +21,9 @@
 
 //=====[Declaration of external public global variables]=======================
 
+
 //=====[Declaration and initialization of public global variables]=============
+nonBlockingDelay refreshDelay ( REFRESH_TIME_10MS  );
 
 //=====[Declaration and initialization of private global variables]============
 
@@ -45,10 +48,16 @@ void gsmGprsCom::write( const char* str )
 {
     this->uartGsmGprs->write( str, strlen(str) );
 }
-/*
-gsmGprsCom::gsmGprsCom ()
+
+
+// Compara caracter pasado como parametro contra caracter recibido por UART
+bool gsmGprsCom::charRead( char* receivedChar )
 {
-    UnbufferedSerial this->uartGsmGprs( PE_8, PE_7, 115200 );
- 
+    char receivedCharLocal = '\0';
+    if( this->uartGsmGprs->readable() ) {
+        this->uartGsmGprs->read(&receivedCharLocal,1);
+        *receivedChar = receivedCharLocal;
+        return true;
+    }
+    return false;
 }
-*/

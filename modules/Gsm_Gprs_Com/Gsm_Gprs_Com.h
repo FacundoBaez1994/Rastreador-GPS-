@@ -16,6 +16,8 @@ typedef enum {
 
 //=====[Declarations (prototypes) of public functions]=========================
 
+
+
 //=====[Declaration of public classes]=========================
 class gsmGprsCom {
 public:
@@ -28,6 +30,7 @@ private:
     gsmGprsComState_t gsmGprsComState;
     UnbufferedSerial* uartGsmGprs;
 
+    bool charRead( char* receivedChar);
     void write( const char* str );
 };
 
