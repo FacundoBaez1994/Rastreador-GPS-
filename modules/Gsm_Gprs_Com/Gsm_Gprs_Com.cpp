@@ -10,11 +10,12 @@
 //#include "pc_serial_com.h"
 
 
+
 //=====[Declaration of private defines]========================================
 #define REFRESH_TIME_10MS         10
 
-//=====[Declaration of private data types]=====================================
-
+//=====[Declaration of private functions]=====================================
+static void pcSerialComCharWrite( char chr );
 
 //=====[Declaration and initialization of public global objects]===============
 
@@ -23,7 +24,8 @@
 
 
 //=====[Declaration and initialization of public global variables]=============
-nonBlockingDelay refreshDelay ( REFRESH_TIME_10MS  );
+nonBlockingDelay refreshDelay ( REFRESH_TIME_10MS  ); //  PASAR A DENTRO DEL OBJETO
+UnbufferedSerial uartUsb(USBTX, USBRX, 115200); // debug only
 
 //=====[Declaration and initialization of private global variables]============
 
@@ -34,14 +36,27 @@ nonBlockingDelay refreshDelay ( REFRESH_TIME_10MS  );
 
 //=====[Implementations of public methods]===================================
 
+gsmGprsCom::gsmGprsCom(){
+    this->uartGsmGprs = new UnbufferedSerial ( PE_8, PE_7, 115200 );
+    this->gsmGprsComState = GSM_GPRS_STATE_INIT;
+}
+
 gsmGprsCom::gsmGprsCom(UnbufferedSerial * serialCom){
     this->uartGsmGprs = serialCom;
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
 }
 
 void gsmGprsCom::connect (){
+    if (this->gsmGprsComState == GSM_GPRS_STATE_INIT) {
+        this->write( "AT\r\n" );
+        delay (10); // DELAY BLOQUEANTE DE PRUEBA CAMBIAR
+        this->gsmGprsComState = GSM_GPRS_STATE_AT;
+    }
+    if (isTheExpectedResponse()) {
 
-    this->gsmGprsComState = GSM_GPRS_STATE_AT;
+    }
+
+    
 }
 
 void gsmGprsCom::write( const char* str )
@@ -60,4 +75,34 @@ bool gsmGprsCom::charRead( char* receivedChar )
         return true;
     }
     return false;
+}
+
+
+ bool gsmGprsCom::isTheExpectedResponse ()
+{
+   static int responseStringPositionIndex = 0;
+   char charReceived;
+   bool moduleResponse = false;
+
+   if( this->charRead(&charReceived) ){
+      if (charReceived == GsmGprsComExpectedResponse [this->gsmGprsComState][responseStringPositionIndex]) {
+        pcSerialComCharWrite (charReceived); // debug only
+         responseStringPositionIndex++;
+         if (charReceived == GsmGprsComExpectedResponse [this->gsmGprsComState][responseStringPositionIndex] == '\0') {
+            responseStringPositionIndex = 0;
+            moduleResponse = true;
+         }
+      } else {
+         responseStringPositionIndex = 0;
+      }
+   }
+   return moduleResponse;
+}
+
+
+static void pcSerialComCharWrite( char chr )  // debug only
+{
+    char str[2] = "";
+    sprintf (str, "%c", chr);
+    uartUsb.write( str, strlen(str) );
 }

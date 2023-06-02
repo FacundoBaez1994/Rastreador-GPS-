@@ -21,6 +21,7 @@ typedef enum {
 //=====[Declaration of public classes]=========================
 class gsmGprsCom {
 public:
+    gsmGprsCom ();
     gsmGprsCom (UnbufferedSerial * uartGsmGprs);
     void connect ();
     void send (char * mensaje);
@@ -29,9 +30,11 @@ public:
 private:
     gsmGprsComState_t gsmGprsComState;
     UnbufferedSerial* uartGsmGprs;
+    char GsmGprsComExpectedResponse [20][20] = {"OK", "??"}; //Chequear largos
 
     bool charRead( char* receivedChar);
     void write( const char* str );
+    bool isTheExpectedResponse ();
 };
 
 //=====[#include guards - end]=================================================

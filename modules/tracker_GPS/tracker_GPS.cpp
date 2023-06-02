@@ -2,9 +2,8 @@
 
 #include "arm_book_lib.h"
 #include "tracker_GPS.h"
-
-
 #include "non_Blocking_Delay.h"
+
 
 //=====[Declaration of private defines]========================================
 #define DELAY_2_SECONDS         2000
@@ -29,12 +28,15 @@ DigitalOut LED_2 (LED3);
 
 trackerGPS::trackerGPS ()
 {
+    this->gsmGprs = new gsmGprsCom ( );
     LED = ON;
     LED_2 = ON;
 }
 
 void trackerGPS::update ()
 {
+    gsmGprs->connect ();
+    
     if( latency.read() ) {
         LED = !LED;
     }    

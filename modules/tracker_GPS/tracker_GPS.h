@@ -3,6 +3,9 @@
 #ifndef _TRACKER_GPS_H_
 #define _TRACKER_GPS_H_
 
+#include "Gsm_Gprs_Com.h"
+
+
 //=====[Declaration of public defines]=========================================
 
 
@@ -14,6 +17,7 @@ public:
     trackerGPS ();
     void update();
 private:
+    gsmGprsCom * gsmGprs;
 };
 
 
