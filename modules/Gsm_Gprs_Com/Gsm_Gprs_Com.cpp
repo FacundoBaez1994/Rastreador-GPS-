@@ -24,29 +24,27 @@ static void pcSerialComCharWrite( char chr );
 
 
 //=====[Declaration and initialization of public global variables]=============
-nonBlockingDelay refreshDelay ( REFRESH_TIME_10MS  ); //  PASAR A DENTRO DEL OBJETO
+
 UnbufferedSerial uartUsb(USBTX, USBRX, 115200); // debug only
 
 //=====[Declaration and initialization of private global variables]============
 
-
-
 //=====[Declarations (prototypes) of private functions]========================
-
 
 //=====[Implementations of public methods]===================================
 
-gsmGprsCom::gsmGprsCom(){
+gsmGprsCom::gsmGprsCom() {
+    this->refreshDelay =  new nonBlockingDelay ( REFRESH_TIME_10MS  ); 
     this->uartGsmGprs = new UnbufferedSerial ( PE_8, PE_7, 115200 );
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
 }
 
-gsmGprsCom::gsmGprsCom(UnbufferedSerial * serialCom){
+gsmGprsCom::gsmGprsCom(UnbufferedSerial * serialCom) {
     this->uartGsmGprs = serialCom;
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
 }
 
-void gsmGprsCom::connect (){
+void gsmGprsCom::connect () {
     if (this->gsmGprsComState == GSM_GPRS_STATE_INIT) {
         this->write( "AT\r\n" );
         delay (10); // DELAY BLOQUEANTE DE PRUEBA CAMBIAR
@@ -54,13 +52,10 @@ void gsmGprsCom::connect (){
     }
     if (isTheExpectedResponse()) {
 
-    }
-
-    
+    }    
 }
 
-void gsmGprsCom::write( const char* str )
-{
+void gsmGprsCom::write( const char* str ) {
     this->uartGsmGprs->write( str, strlen(str) );
 }
 
@@ -99,9 +94,8 @@ bool gsmGprsCom::charRead( char* receivedChar )
    return moduleResponse;
 }
 
-
-static void pcSerialComCharWrite( char chr )  // debug only
-{
+// debug only
+static void pcSerialComCharWrite( char chr )  {
     char str[2] = "";
     sprintf (str, "%c", chr);
     uartUsb.write( str, strlen(str) );

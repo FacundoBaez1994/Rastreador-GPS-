@@ -24,28 +24,25 @@ void tickerCallback();
 tick_t tickRead();
 
 //=====[Implementations of private methods]===================================
-void nonBlockingDelay::tickInit()
-{
+void nonBlockingDelay::tickInit() {
     this->ticker.attach( tickerCallback, 1ms );
 }
 
 //=====[Implementations of public methods]===================================
 
-nonBlockingDelay::nonBlockingDelay (tick_t durationValue )
-{
+nonBlockingDelay::nonBlockingDelay (tick_t durationValue ) {
     this->tickInit ();
     this->duration = durationValue;
     this->isRunning = false;
 }
 
-bool nonBlockingDelay::read (void)
-{
+bool nonBlockingDelay::read (void) {
    bool timeArrived = false;
    tick_t elapsedTime;
 
    if( !this->isRunning ) {
-      this->startTime = tickCounter;
-      this->isRunning = true;
+        this->startTime = tickCounter;
+        this->isRunning = true;
    } else {
       elapsedTime = tickCounter - this->startTime;
       if ( elapsedTime >= this->duration ) {
@@ -53,23 +50,19 @@ bool nonBlockingDelay::read (void)
          this->isRunning = false;
       }
    }
-
    return timeArrived;
 }
 
-void nonBlockingDelay::write( tick_t durationValue )
-{
+void nonBlockingDelay::write( tick_t durationValue ) {
    this->duration = durationValue;
 }
 
 //=====[Implementations of private functions]==================================
 // ISR cannot form part of the class
-void tickerCallback( void ) 
-{
+void tickerCallback( void )  {
     tickCounter++;
 }
 
-tick_t tickRead()
-{
+tick_t tickRead() {
     return tickCounter;
 }

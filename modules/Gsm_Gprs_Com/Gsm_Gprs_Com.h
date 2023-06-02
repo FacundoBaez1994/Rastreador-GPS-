@@ -8,11 +8,13 @@
 #include "non_Blocking_Delay.h"
 
 //=====[Declaration of public defines]=========================================
+
+
+//=====[Declaration of public data types]======================================
 typedef enum {
     GSM_GPRS_STATE_INIT,
     GSM_GPRS_STATE_AT,
 } gsmGprsComState_t;
-//=====[Declaration of public data types]======================================
 
 //=====[Declarations (prototypes) of public functions]=========================
 
@@ -20,18 +22,24 @@ typedef enum {
 
 //=====[Declaration of public classes]=========================
 class gsmGprsCom {
+
 public:
+// public methods
     gsmGprsCom ();
     gsmGprsCom (UnbufferedSerial * uartGsmGprs);
     void connect ();
     void send (char * mensaje);
     // char* recv (char * mensaje);
     void disconnect ();
-private:
-    gsmGprsComState_t gsmGprsComState;
-    UnbufferedSerial* uartGsmGprs;
-    char GsmGprsComExpectedResponse [20][20] = {"OK", "??"}; //Chequear largos
 
+private:
+// private attributtes
+    gsmGprsComState_t gsmGprsComState;
+    UnbufferedSerial * uartGsmGprs;
+    char GsmGprsComExpectedResponse [20][20] = {"OK", "??"}; //Chequear largos
+    nonBlockingDelay * refreshDelay;
+
+// private methods
     bool charRead( char* receivedChar);
     void write( const char* str );
     bool isTheExpectedResponse ();

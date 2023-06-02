@@ -4,6 +4,7 @@
 #define _TRACKER_GPS_H_
 
 #include "Gsm_Gprs_Com.h"
+#include "non_Blocking_Delay.h"
 
 
 //=====[Declaration of public defines]=========================================
@@ -18,6 +19,7 @@ public:
     void update();
 private:
     gsmGprsCom * gsmGprs;
+    nonBlockingDelay * latency;
 };
 
 

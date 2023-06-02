@@ -12,7 +12,6 @@
 
 //=====[Declaration and initialization of public global objects]===============
 
-nonBlockingDelay latency ( DELAY_2_SECONDS);
 DigitalOut LED (LED2);
 DigitalOut LED_2 (LED3);
 
@@ -29,18 +28,15 @@ DigitalOut LED_2 (LED3);
 trackerGPS::trackerGPS ()
 {
     this->gsmGprs = new gsmGprsCom ( );
+    this->latency = new nonBlockingDelay ( DELAY_2_SECONDS);
     LED = ON;
     LED_2 = ON;
 }
 
 void trackerGPS::update ()
 {
-    gsmGprs->connect ();
-    
-    if( latency.read() ) {
-        LED = !LED;
-    }    
-   //wifiComUpdate();
+    this->gsmGprs->connect ();
+
 }
 
 //=====[Implementations of private methods]==================================
