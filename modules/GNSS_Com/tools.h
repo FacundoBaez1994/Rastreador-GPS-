@@ -5,6 +5,8 @@
 #include <string.h>
 //#include "main.h"
 
+struct tm rtcTime;
+
 
 #define __8BITCAT(x,y) ( (x << 8 ) + y )
 /*
