@@ -25,7 +25,8 @@ static void pcSerialComCharWrite( char chr );
 
 //=====[Declaration and initialization of public global variables]=============
 
-UnbufferedSerial uartUsb(USBTX, USBRX, 115200); // debug only
+UnbufferedSerial uartUsb(USBTX, USBRX, 115200 ); // debug only
+
 
 //=====[Declaration and initialization of private global variables]============
 
@@ -35,8 +36,9 @@ UnbufferedSerial uartUsb(USBTX, USBRX, 115200); // debug only
 
 gsmGprsCom::gsmGprsCom() {
     this->refreshDelay =  new nonBlockingDelay ( REFRESH_TIME_10MS  ); 
-    this->uartGsmGprs = new UnbufferedSerial ( PE_8, PE_7, 115200 );
+    this->uartGsmGprs = new UnbufferedSerial ( PE_8, PE_7, 9600 ); // TX RX
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
+    
 }
 
 gsmGprsCom::gsmGprsCom(UnbufferedSerial * serialCom) {
@@ -45,15 +47,16 @@ gsmGprsCom::gsmGprsCom(UnbufferedSerial * serialCom) {
 }
 
 void gsmGprsCom::connect () {
-    if (this->gsmGprsComState == GSM_GPRS_STATE_INIT) {
-        this->write( "AT\r\n" );
-        delay (10); // DELAY BLOQUEANTE DE PRUEBA CAMBIAR
-        this->gsmGprsComState = GSM_GPRS_STATE_AT;
-    }
-    if (isTheExpectedResponse()) {
+     //if (this->gsmGprsComState == GSM_GPRS_STATE_INIT) {
 
-    }    
-}
+        //this->gsmGprsComState = GSM_GPRS_STATE_AT;
+
+    this->write( "AT\r\n");
+    delay (100); // DELAY BLOQUEANTE DE PRUEBA CAMBIAR
+    if (isTheExpectedResponse()) {
+    } 
+
+ }
 
 void gsmGprsCom::write( const char* str ) {
     this->uartGsmGprs->write( str, strlen(str) );
@@ -66,7 +69,9 @@ bool gsmGprsCom::charRead( char* receivedChar )
     char receivedCharLocal = '\0';
     if( this->uartGsmGprs->readable() ) {
         this->uartGsmGprs->read(&receivedCharLocal,1);
+        pcSerialComCharWrite (receivedCharLocal); // debug only
         *receivedChar = receivedCharLocal;
+        
         return true;
     }
     return false;
@@ -81,7 +86,6 @@ bool gsmGprsCom::charRead( char* receivedChar )
 
    if( this->charRead(&charReceived) ){
       if (charReceived == GsmGprsComExpectedResponse [this->gsmGprsComState][responseStringPositionIndex]) {
-        pcSerialComCharWrite (charReceived); // debug only
          responseStringPositionIndex++;
          if (charReceived == GsmGprsComExpectedResponse [this->gsmGprsComState][responseStringPositionIndex] == '\0') {
             responseStringPositionIndex = 0;
