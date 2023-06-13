@@ -21,6 +21,13 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#ifndef _TINY_GPS_H_
+#define _TINY_GPS_H_
+
+
+#include <math.h>
+#include <stdlib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -100,3 +107,5 @@ extern "C" {
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+#endif // _TINY_GPS_H_

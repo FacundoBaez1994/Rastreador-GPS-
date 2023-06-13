@@ -62,7 +62,6 @@ void gsmGprsCom::write( const char* str ) {
     this->uartGsmGprs->write( str, strlen(str) );
 }
 
-
 // Compara caracter pasado como parametro contra caracter recibido por UART
 bool gsmGprsCom::charRead( char* receivedChar )
 {

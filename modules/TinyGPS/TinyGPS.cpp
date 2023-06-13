@@ -1,6 +1,5 @@
+
 #include "TinyGPS.h"
-#include <math.h>
-#include <stdlib.h>
 
 #define TWO_PI M_PI*2
 #define sq(n) (n*n)

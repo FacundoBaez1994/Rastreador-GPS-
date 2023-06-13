@@ -39,6 +39,7 @@ trackerGPS::trackerGPS ()
 void trackerGPS::update ()
 {  
     char c  = '\0';
+    char str[100] = "";
     float flat, flon;
     unsigned long age;
 
@@ -46,6 +47,8 @@ void trackerGPS::update ()
         uartGPSCom.read(&c, 1); 
         encode(c);
         f_get_position(&flat, &flon, &age);
+        sprintf ( str, "lat: %.6f  long: %.6f ", flat, flon);
+        uartComUSB.write( str, strlen(str) );
     }
      
 //    this->gsmGprs->connect ();
