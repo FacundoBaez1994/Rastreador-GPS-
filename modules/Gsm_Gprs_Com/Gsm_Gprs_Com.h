@@ -14,10 +14,12 @@
 typedef enum {
     GSM_GPRS_STATE_INIT,
     GSM_GPRS_STATE_AT_TO_BE_SEND,
-    GSM_GPRS_STATE_AT_SENT,
+    GSM_GPRS_STATE_AT_WAIT_FOR_RESPONSE,
     GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND,
-    GSM_GPRS_STATE_ATPLUSCSQ_SENT,
+    GSM_GPRS_STATE_ATPLUSCSQ_WAIT_FOR_RESPONSE,
+
     GSM_GPRS_STATE_NO_SIGNAL,
+    GSM_GPRS_STATE_ERROR,
 } gsmGprsComState_t;
 
 /*
@@ -44,14 +46,16 @@ public:
 private:
 // private attributtes
     gsmGprsComState_t gsmGprsComState;
-    BufferedSerial * uartGsmGprs;
-    char GsmGprsComExpectedResponse [20][20] = {"OK", "??"}; //Chequear largos
-    nonBlockingDelay * refreshDelay;
+    BufferedSerial* uartGsmGprs;
+    nonBlockingDelay* refreshDelay;
 
 // private methods
-    bool charRead( char* receivedChar);
-    void write( const char* str );
-    bool isTheExpectedResponse ();
+    void sendATCommand (); 
+    void checkATCommandResponse ();
+    bool charRead(char* receivedChar);
+    void write(const char* str);
+    bool checkUARTResponse (const char* stringToCheck);
+    
 };
 
 //=====[#include guards - end]=================================================
