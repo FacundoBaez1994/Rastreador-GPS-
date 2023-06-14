@@ -13,7 +13,7 @@
 DigitalOut LED (LED2);
 DigitalOut LED_2 (LED3);
 UnbufferedSerial uartComUSB (USBTX, USBRX, 115200 );
-UnbufferedSerial  uartGPSCom ( PG_14, PG_9, 9600 ); // debug only
+BufferedSerial  uartGPSCom ( PG_14, PG_9, 9600 ); // debug only
 
 
 
@@ -45,10 +45,11 @@ void trackerGPS::update ()
 
     while ( uartGPSCom.readable() ) {
         uartGPSCom.read(&c, 1); 
-        encode(c);
-        f_get_position(&flat, &flon, &age);
-        sprintf ( str, "lat: %.6f  long: %.6f ", flat, flon);
-        uartComUSB.write( str, strlen(str) );
+        if (encode(c)) {
+            f_get_position(&flat, &flon, &age);
+            sprintf ( str, "lat: %.6f  long: %.6f ", flat, flon);
+            uartComUSB.write( str, strlen(str) );
+        }
     }
      
 //    this->gsmGprs->connect ();
