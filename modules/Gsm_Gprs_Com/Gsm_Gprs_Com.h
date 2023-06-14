@@ -13,9 +13,18 @@
 //=====[Declaration of public data types]======================================
 typedef enum {
     GSM_GPRS_STATE_INIT,
-    GSM_GPRS_STATE_AT,
+    GSM_GPRS_STATE_AT_TO_BE_SEND,
+    GSM_GPRS_STATE_AT_SENT,
+    GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCSQ_SENT,
+    GSM_GPRS_STATE_NO_SIGNAL,
 } gsmGprsComState_t;
 
+/*
+ AT+CSQ //Signal quality test, value range is 0-31 , 31 is the best
+  mySerial.println("AT+CCID"); //Read SIM information to confirm whether the SIM is plugged
+  mySerial.println("AT+COPS?");
+*/
 //=====[Declarations (prototypes) of public functions]=========================
 
 
@@ -26,7 +35,7 @@ class gsmGprsCom {
 public:
 // public methods
     gsmGprsCom ();
-    gsmGprsCom (UnbufferedSerial * uartGsmGprs);
+    gsmGprsCom (BufferedSerial * uartGsmGprs);
     void connect ();
     void send (char * mensaje);
     // char* recv (char * mensaje);
@@ -35,7 +44,7 @@ public:
 private:
 // private attributtes
     gsmGprsComState_t gsmGprsComState;
-    UnbufferedSerial * uartGsmGprs;
+    BufferedSerial * uartGsmGprs;
     char GsmGprsComExpectedResponse [20][20] = {"OK", "??"}; //Chequear largos
     nonBlockingDelay * refreshDelay;
 

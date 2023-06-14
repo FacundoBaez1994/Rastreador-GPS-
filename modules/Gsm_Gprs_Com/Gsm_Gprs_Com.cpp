@@ -13,6 +13,9 @@
 
 //=====[Declaration of private defines]========================================
 #define REFRESH_TIME_10MS         10
+#define APN_USER_PASS "AT+CSTT=\"wap.gprs.unifon.com.ar \",\"wap\",\"wap\"" //APN / username / password (CAMBIAR SI SE CAMBIA LA SIM!)
+#define IP_PORT "AT+CIPSTART=\"TCP\",\"181.229.29.221\",\"123\"" //PROTOCOL / EXTERNAL IP / PORT
+
 
 //=====[Declaration of private functions]=====================================
 static void pcSerialComCharWrite( char chr );
@@ -24,7 +27,6 @@ static void pcSerialComCharWrite( char chr );
 
 
 //=====[Declaration and initialization of public global variables]=============
-
 UnbufferedSerial uartUsb(USBTX, USBRX, 115200 ); // debug only
 
 
@@ -36,17 +38,22 @@ UnbufferedSerial uartUsb(USBTX, USBRX, 115200 ); // debug only
 
 gsmGprsCom::gsmGprsCom() {
     this->refreshDelay =  new nonBlockingDelay ( REFRESH_TIME_10MS  ); 
-    this->uartGsmGprs = new UnbufferedSerial ( PE_8, PE_7, 9600 ); // TX RX
+    this->uartGsmGprs = new BufferedSerial ( PE_8, PE_7, 9600 ); // TX RX
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
     
 }
 
-gsmGprsCom::gsmGprsCom(UnbufferedSerial * serialCom) {
+gsmGprsCom::gsmGprsCom(BufferedSerial * serialCom) {
     this->uartGsmGprs = serialCom;
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
 }
 
 void gsmGprsCom::connect () {
+    /*
+    switch (this->gsmGprsComState) {
+    cases
+    }
+    */
      //if (this->gsmGprsComState == GSM_GPRS_STATE_INIT) {
 
         //this->gsmGprsComState = GSM_GPRS_STATE_AT;
