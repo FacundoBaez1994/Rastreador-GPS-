@@ -10,8 +10,10 @@
 
 //=====[Declaration of private defines]========================================
 #define REFRESH_TIME_10MS         10
+#define REFRESH_TIME_1000MS       1000
 #define APN_USER_PASS "AT+CSTT=\"wap.gprs.unifon.com.ar \",\"wap\",\"wap\"" //APN / username / password (CAMBIAR SI SE CAMBIA LA SIM!)
 #define IP_PORT "AT+CIPSTART=\"TCP\",\"181.229.29.221\",\"123\"" //PROTOCOL / EXTERNAL IP / PORT
+#define DEBUG
 
 //=====[Declaration of private functions]=====================================
 static void pcSerialComCharWrite( char chr );
@@ -32,7 +34,7 @@ UnbufferedSerial uartUsb(USBTX, USBRX, 115200 ); // debug only
 //=====[Implementations of public methods]===================================
 
 gsmGprsCom::gsmGprsCom() {
-    this->refreshDelay =  new nonBlockingDelay ( REFRESH_TIME_10MS  ); 
+    this->refreshDelay =  new nonBlockingDelay ( REFRESH_TIME_1000MS  ); 
     this->uartGsmGprs = new BufferedSerial ( PE_8, PE_7, 9600 ); // TX RX
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
     
@@ -47,35 +49,46 @@ void gsmGprsCom::connect () {
     switch (this->gsmGprsComState) { // Se puede cambiar a un arreglo de punteros a array o por un patron de diseño
         case GSM_GPRS_STATE_INIT:
             this->gsmGprsComState = GSM_GPRS_STATE_AT_TO_BE_SEND;
+            break;
+
         case GSM_GPRS_STATE_AT_TO_BE_SEND:
             this->sendATCommand ();
+            break;
+            
         case GSM_GPRS_STATE_AT_WAIT_FOR_RESPONSE:
             this->checkATCommandResponse ();
-            uartUsb.write( "Se leyo correctamente OK",  26 );  // debug only
-            this->gsmGprsComState = GSM_GPRS_STATE_AT_TO_BE_SEND;
+            if (this->refreshDelay->read ()) {
+                this->gsmGprsComState = GSM_GPRS_STATE_ERROR;
+            }
+            break;
+
+        case  GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND:
+            break;
 
         case GSM_GPRS_STATE_ERROR:
-            uartUsb.write( "Error",  26 );  // debug only
+            #ifdef DEBUG
+            uartUsb.write( "Error\r\n",  6 );  // debug only
+            #endif
             this->gsmGprsComState = GSM_GPRS_STATE_AT_TO_BE_SEND; // Vuelve al primer estado
+            break;
     }
     
  }
 
  void gsmGprsCom::sendATCommand (  ) {
     this->write( "AT\r\n");
-    this->refreshDelay->write( REFRESH_TIME_10MS );
+    this->refreshDelay->write( REFRESH_TIME_1000MS );
     this->gsmGprsComState =  GSM_GPRS_STATE_AT_WAIT_FOR_RESPONSE;
 }
 
- void gsmGprsCom::checkATCommandResponse (  ) {
+void gsmGprsCom::checkATCommandResponse (  ) {
     char expectedResponse [] = "OK";
-    if (this->refreshDelay->read()) {
-        if (checkUARTResponse (expectedResponse )) {
-        } 
-    } else {
-        this->gsmGprsComState = GSM_GPRS_STATE_ERROR;
-    }
-
+    if (checkUARTResponse (expectedResponse )) {
+        this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND;
+        #ifdef DEBUG
+        uartUsb.write( "Se leyo correctamente OK \r\n",  26 );  // debug only
+        #endif
+    } 
 }
 
 void gsmGprsCom::write( const char* str ) {
