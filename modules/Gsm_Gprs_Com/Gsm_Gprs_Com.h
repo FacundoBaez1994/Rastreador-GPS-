@@ -17,9 +17,9 @@ typedef enum {
     GSM_GPRS_STATE_AT_WAIT_FOR_RESPONSE,
     GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND,
     GSM_GPRS_STATE_ATPLUSCSQ_WAIT_FOR_RESPONSE,
-
+    GSM_GPRS_STATE_ATPULSCCID_TO_BE_SEND,
     GSM_GPRS_STATE_NO_SIGNAL,
-    GSM_GPRS_STATE_ERROR,
+    GSM_GPRS_STATE_DISCONNECTED,
 } gsmGprsComState_t;
 
 /*
@@ -48,13 +48,17 @@ private:
     gsmGprsComState_t gsmGprsComState;
     BufferedSerial* uartGsmGprs;
     nonBlockingDelay* refreshDelay;
+    float signalLevel;
 
 // private methods
+    void checkATPLUSCSQResponse ();
+    void sendATPLUSCSQcommand ();
     void sendATCommand (); 
     void checkATCommandResponse ();
     bool charRead(char* receivedChar);
     void write(const char* str);
     bool checkUARTResponse (const char* stringToCheck);
+
     
 };
 
