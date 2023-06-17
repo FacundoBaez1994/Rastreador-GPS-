@@ -16,6 +16,7 @@
 #define IP_PORT "AT+CIPSTART=\"TCP\",\"181.229.29.221\",\"123\"" //PROTOCOL / EXTERNAL IP / PORT
 #define DEBUG
 #define LOW_LEVEL_SIGNAL 6
+#define CCID_VERIFICATION "8954078100795517486f" // (CAMBIAR SI SE CAMBIA LA SIM!)
 
 //=====[Declaration of private functions]=====================================
 static void pcSerialComCharWrite( char chr );
@@ -76,8 +77,21 @@ void gsmGprsCom::connect () {
             }
         } break;
 
-        case  GSM_GPRS_STATE_ATPULSCCID_TO_BE_SEND: {
+        case  GSM_GPRS_STATE_ATPLUSCCID_TO_BE_SEND: {
+            this->sendATPLUSCCIDcommand ();
+            break;
         } break;
+
+        case  GSM_GPRS_STATE_ATPLUSCCID_WAIT_FOR_RESPONSE:  {
+            this->checkATPLUSCCIDcommand  ();
+            if (this->refreshDelay->read ()) {
+                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCCID_TO_BE_SEND;
+            }
+        } break;
+
+        case  GSM_GPRS_STATE_ATPLUSCSPN_TO_BE_SEND:  {
+        } break;
+
 
         case GSM_GPRS_STATE_DISCONNECTED: {
             #ifdef DEBUG
@@ -96,11 +110,29 @@ void gsmGprsCom::connect () {
             uartUsb.write (messageModuleWithNoSignal,  strlen (messageModuleWithNoSignal) );  // debug only
             uartUsb.write ( "\r\n",  3 );  // debug only
             #endif
-            this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND; // Vuelve al primer estado
+            this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND; 
         } break;
-
-
     }
+}
+
+void gsmGprsCom::checkATPLUSCCIDcommand ()  {
+    if (checkUARTResponse (CCID_VERIFICATION)) {
+        #ifdef DEBUG
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        char msg []  = "CCID command responded correctly \r\n";
+        uartUsb.write( msg, strlen (msg) );  // debug only
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        #endif
+        this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSPN_TO_BE_SEND;
+    } 
+}
+
+void gsmGprsCom::sendATPLUSCCIDcommand ()  {
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->write( "AT+CCID\r\n");
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->refreshDelay->write( REFRESH_TIME_1000MS );
+    this->gsmGprsComState =  GSM_GPRS_STATE_ATPLUSCCID_WAIT_FOR_RESPONSE;
 }
 
  /*
@@ -108,9 +140,7 @@ void gsmGprsCom::connect () {
 si ok respuesta tipo +CSQ: 24
 es un numero de 2 digitos (fijo)
  */
-
 void gsmGprsCom::checkATPLUSCSQResponse (  ) {
-
     char stringToCheck [7] = "+CSQ: ";
     char msgStringSignalQuality [9]= "";
     static std::string strSignalQuality = "";
@@ -128,7 +158,7 @@ void gsmGprsCom::checkATPLUSCSQResponse (  ) {
                 strSignalQuality += charReceived;
             } 
             responseStringPositionIndex++;
-            if ( (responseStringPositionIndex >= (strlen (stringToCheck) + 2 ))   ) {       
+            if ( (responseStringPositionIndex == (strlen (stringToCheck) + 2 ))   ) {       
                 this->signalLevel = std::stof(strSignalQuality);
 
                 #ifdef DEBUG     
@@ -139,13 +169,17 @@ void gsmGprsCom::checkATPLUSCSQResponse (  ) {
                 uartUsb.write (msgStringSignalQuality,  strlen (msgStringSignalQuality) );  // debug only
                 uartUsb.write ( "\r\n",  3 );  // debug only
                 #endif
-                responseStringPositionIndex = 0;
-                std::string strSignalQuality = "";
                 if (this->signalLevel < LOW_LEVEL_SIGNAL) {
                     this->gsmGprsComState = GSM_GPRS_STATE_NO_SIGNAL;
+                    responseStringPositionIndex = 0;
+                    std::string strSignalQuality = "";
+                    return;
+                } else {
+                    this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCCID_TO_BE_SEND;
+                    responseStringPositionIndex = 0;
+                    std::string strSignalQuality = "";
                     return;
                 }
-                this->gsmGprsComState = GSM_GPRS_STATE_ATPULSCCID_TO_BE_SEND;
             }  
         } 
         if (charReceived == stringToCheck [responseStringPositionIndex] && responseStringPositionIndex < (strlen (stringToCheck) )   )  { //&& responseStringPositionIndex <= strlen (stringToCheck) -1
@@ -174,8 +208,10 @@ void gsmGprsCom::checkATCommandResponse (  ) {
     if (checkUARTResponse (expectedResponse )) {
         this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND;
         #ifdef DEBUG
+        uartUsb.write ( "\r\n",  3 );  // debug only
         char msg []  = "AT command responded correctly \r\n";
-        uartUsb.write( "AT command responded correctly \r\n", strlen (msg) );  // debug only
+        uartUsb.write( msg, strlen (msg) );  // debug only
+        uartUsb.write ( "\r\n",  3 );  // debug only
         #endif
     } 
 }
