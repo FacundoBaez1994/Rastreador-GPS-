@@ -24,9 +24,18 @@ typedef enum {
     GSM_GPRS_STATE_ATPLUSCGREG_WAIT_FOR_RESPONSE, 
     GSM_GPRS_STATE_ATPLUSCGATT_TO_BE_SEND,
     GSM_GPRS_STATE_ATPLUSCGATT_WAIT_FOR_RESPONSE, 
-
     GSM_GPRS_STATE_ATPLUSCIPSHUT_TO_BE_SEND,
     GSM_GPRS_STATE_ATPLUSCIPSHUT_WAIT_FOR_RESPONSE,
+    GSM_GPRS_STATE_ATPLUSCIPMUX_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCIPMUX_WAIT_FOR_RESPONSE,
+    GSM_GPRS_STATE_ATPLUSCSTT_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCSTT_WAIT_FOR_RESPONSE,
+    GSM_GPRS_STATE_ATPLUSCIICR_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCIICR_WAIT_FOR_RESPONSE,
+    
+    GSM_GPRS_STATE_ATPLUSCIPSTART_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCIPSTART_WAIT_FOR_RESPONSE,
+    GSM_GPRS_STATE_CONNECTION_ESTABLISHED,
 
     GSM_GPRS_STATE_NO_SIM_CARD,
     GSM_GPRS_STATE_NO_SIGNAL,
@@ -62,6 +71,14 @@ private:
     float signalLevel;
 
 // private methods
+    void checkATPLUSCIPSTARTcommand ();
+    void sendATPLUSCIPSTARTcommand ();
+    void checkATPLUSCIICRcommand ();
+    void sendATPLUSCIICRcommand ();
+    void checkATPLUSCSTTcommand ();
+    void sendATPLUSCSTTcommand ();
+    void checkATPLUSCIPMUXcommand ();
+    void sendATPLUSCIPMUXcommand ();
     void checkATPLUSCIPSHUTcommand ();
     void sendATPLUSCIPSHUTcommand ();
     void checkATPLUSCGATTcommand ();
@@ -76,9 +93,7 @@ private:
     void checkATCommandResponse ();
     bool charRead(char* receivedChar);
     void write(const char* str);
-    bool checkUARTResponse (const char* stringToCheck);
-
-    
+    bool checkUARTResponse (const char* stringToCheck);    
 };
 
 //=====[#include guards - end]=================================================
