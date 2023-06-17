@@ -112,13 +112,31 @@ void gsmGprsCom::connect () {
             this->checkATPLUSCGATTcommand  ();
             if (this->refreshDelay->read ()) {
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGREG_TO_BE_SEND;
+                #ifdef DEBUG
                 uartUsb.write ( "\r\n",  3 );  // debug only
                 char msg []  = "AT+GATT=1 NOT command responded correctly \r\n";
                 uartUsb.write( msg, strlen (msg) );  // debug only
                 uartUsb.write ( "\r\n",  3 );  // debug only
+                #endif
             }
         } break;
-        
+
+        case  GSM_GPRS_STATE_ATPLUSCIPSHUT_TO_BE_SEND:  { //CGATT SEND
+            this->sendATPLUSCIPSHUTcommand ();
+        } break;
+
+        case  GSM_GPRS_STATE_ATPLUSCIPSHUT_WAIT_FOR_RESPONSE:  {  //CGATT WAIT
+            this->checkATPLUSCIPSHUTcommand  ();
+            if (this->refreshDelay->read ()) {
+               this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSHUT_TO_BE_SEND;
+                #ifdef DEBUG
+                uartUsb.write ( "\r\n",  3 );  // debug only
+                char msg []  = "AT+CIPSHUT NOT command responded correctly \r\n";
+                uartUsb.write( msg, strlen (msg) );  // debug only
+                uartUsb.write ( "\r\n",  3 );  // debug only
+                #endif
+            }
+        } break;
 
         case  GSM_GPRS_STATE_NO_SIM_CARD:  {
             #ifdef DEBUG
@@ -155,10 +173,32 @@ void gsmGprsCom::connect () {
     }
 }
 
+
+void gsmGprsCom::checkATPLUSCIPSHUTcommand ()  {
+    char expectedResponse [] = "SHUT OK";
+    if (checkUARTResponse (expectedResponse )) {
+        this->gsmGprsComState = GSM_GPRS_STATE_IDLE;
+        #ifdef DEBUG
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        char msg []  = "Last connection shut down \r\n";
+        uartUsb.write( msg, strlen (msg) );  // debug only
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        #endif
+    }
+}
+
+void gsmGprsCom::sendATPLUSCIPSHUTcommand ()  {
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->write( "AT+CIPSHUT\r\n");
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->refreshDelay->write( REFRESH_TIME_1000MS );
+    this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSHUT_WAIT_FOR_RESPONSE;
+}
+
 void gsmGprsCom::checkATPLUSCGATTcommand ()  {
     char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {
-        this->gsmGprsComState = GSM_GPRS_STATE_IDLE ;
+        this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSHUT_TO_BE_SEND;
         #ifdef DEBUG
         uartUsb.write ( "\r\n",  3 );  // debug only
         char msg []  = "Device attach to the GPRS Network \r\n";

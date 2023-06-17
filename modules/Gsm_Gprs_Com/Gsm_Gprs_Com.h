@@ -24,6 +24,10 @@ typedef enum {
     GSM_GPRS_STATE_ATPLUSCGREG_WAIT_FOR_RESPONSE, 
     GSM_GPRS_STATE_ATPLUSCGATT_TO_BE_SEND,
     GSM_GPRS_STATE_ATPLUSCGATT_WAIT_FOR_RESPONSE, 
+
+    GSM_GPRS_STATE_ATPLUSCIPSHUT_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCIPSHUT_WAIT_FOR_RESPONSE,
+
     GSM_GPRS_STATE_NO_SIM_CARD,
     GSM_GPRS_STATE_NO_SIGNAL,
     GSM_GPRS_STATE_DISCONNECTED,
@@ -58,6 +62,8 @@ private:
     float signalLevel;
 
 // private methods
+    void checkATPLUSCIPSHUTcommand ();
+    void sendATPLUSCIPSHUTcommand ();
     void checkATPLUSCGATTcommand ();
     void sendATPLUSCGATTcommand ();
     void checkATPLUSCGREGcommand ();
