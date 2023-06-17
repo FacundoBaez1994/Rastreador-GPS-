@@ -85,13 +85,50 @@ void gsmGprsCom::connect () {
         case  GSM_GPRS_STATE_ATPLUSCCID_WAIT_FOR_RESPONSE:  {
             this->checkATPLUSCCIDcommand  ();
             if (this->refreshDelay->read ()) {
-                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCCID_TO_BE_SEND;
+                this->gsmGprsComState = GSM_GPRS_STATE_NO_SIM_CARD;
             }
         } break;
 
-        case  GSM_GPRS_STATE_ATPLUSCSPN_TO_BE_SEND:  {
+        case  GSM_GPRS_STATE_ATPLUSCGREG_TO_BE_SEND:  { //CREG SEND
+            this->sendATPLUSCGREGcommand ();
         } break;
 
+        case  GSM_GPRS_STATE_ATPLUSCGREG_WAIT_FOR_RESPONSE:  {  //CREG WAIT
+            this->checkATPLUSCGREGcommand  ();
+            if (this->refreshDelay->read ()) {
+               this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGREG_TO_BE_SEND;
+                uartUsb.write ( "\r\n",  3 );  // debug only
+                char msg []  = "ATPLUSCREG? NOT command responded correctly \r\n";
+                uartUsb.write( msg, strlen (msg) );  // debug only
+                uartUsb.write ( "\r\n",  3 );  // debug only
+            }
+        } break;
+
+       case  GSM_GPRS_STATE_ATPLUSCGATT_TO_BE_SEND:  { //CGATT SEND
+            this->sendATPLUSCGATTcommand ();
+        } break;
+
+        case  GSM_GPRS_STATE_ATPLUSCGATT_WAIT_FOR_RESPONSE:  {  //CGATT WAIT
+            this->checkATPLUSCGATTcommand  ();
+            if (this->refreshDelay->read ()) {
+               this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGREG_TO_BE_SEND;
+                uartUsb.write ( "\r\n",  3 );  // debug only
+                char msg []  = "AT+GATT=1 NOT command responded correctly \r\n";
+                uartUsb.write( msg, strlen (msg) );  // debug only
+                uartUsb.write ( "\r\n",  3 );  // debug only
+            }
+        } break;
+        
+
+        case  GSM_GPRS_STATE_NO_SIM_CARD:  {
+            #ifdef DEBUG
+            uartUsb.write ( "\r\n",  3 );  // debug only
+            char messageModuleWithoutSIMCard []  = "The Tracker cannot read the SIM CARD - If the error persist Please check if the Sim Card it's installed correctly\r\n";
+            uartUsb.write (messageModuleWithoutSIMCard ,  strlen (messageModuleWithoutSIMCard) );  // debug only
+            uartUsb.write ( "\r\n",  3 );  // debug only
+            #endif
+            this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCCID_TO_BE_SEND;
+        } break;
 
         case GSM_GPRS_STATE_DISCONNECTED: {
             #ifdef DEBUG
@@ -112,8 +149,54 @@ void gsmGprsCom::connect () {
             #endif
             this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND; 
         } break;
+
+        case  GSM_GPRS_STATE_IDLE: {
+        } break;
     }
 }
+
+void gsmGprsCom::checkATPLUSCGATTcommand ()  {
+    char expectedResponse [] = "OK";
+    if (checkUARTResponse (expectedResponse )) {
+        this->gsmGprsComState = GSM_GPRS_STATE_IDLE ;
+        #ifdef DEBUG
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        char msg []  = "Device attach to the GPRS Network \r\n";
+        uartUsb.write( msg, strlen (msg) );  // debug only
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        #endif
+    }
+}
+
+void gsmGprsCom::sendATPLUSCGATTcommand ()  {
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->write( "AT+CGATT=1\r\n");
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->refreshDelay->write( REFRESH_TIME_1000MS );
+    this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGATT_WAIT_FOR_RESPONSE;
+}
+
+void gsmGprsCom::checkATPLUSCGREGcommand ()  {
+    char expectedResponse [] = "OK";
+    if (checkUARTResponse (expectedResponse )) {
+        this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGATT_TO_BE_SEND ;
+        #ifdef DEBUG
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        char msg []  = "Device Registed and operational \r\n";
+        uartUsb.write( msg, strlen (msg) );  // debug only
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        #endif
+    }
+}
+
+void gsmGprsCom::sendATPLUSCGREGcommand ()  {
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->write( "AT+CREG?\r\n");
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->refreshDelay->write( REFRESH_TIME_1000MS );
+    this->gsmGprsComState =  GSM_GPRS_STATE_ATPLUSCGREG_WAIT_FOR_RESPONSE;
+}
+
 
 void gsmGprsCom::checkATPLUSCCIDcommand ()  {
     if (checkUARTResponse (CCID_VERIFICATION)) {
@@ -123,7 +206,7 @@ void gsmGprsCom::checkATPLUSCCIDcommand ()  {
         uartUsb.write( msg, strlen (msg) );  // debug only
         uartUsb.write ( "\r\n",  3 );  // debug only
         #endif
-        this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSPN_TO_BE_SEND;
+        this->gsmGprsComState =  GSM_GPRS_STATE_ATPLUSCGREG_TO_BE_SEND;
     } 
 }
 
@@ -152,6 +235,7 @@ void gsmGprsCom::checkATPLUSCSQResponse (  ) {
     if( this->charRead(&charReceived)) {
         if (charReceived != stringToCheck [responseStringPositionIndex] && responseStringPositionIndex < (strlen (stringToCheck) )   )  { 
              responseStringPositionIndex = 0;
+             std::string strSignalQuality = "";
         }
         if ( (responseStringPositionIndex >= (strlen (stringToCheck) - 1 ))   ) {
             if (isdigit(charReceived)) {

@@ -13,13 +13,18 @@
 //=====[Declaration of public data types]======================================
 typedef enum {
     GSM_GPRS_STATE_INIT,
+    GSM_GPRS_STATE_IDLE,
     GSM_GPRS_STATE_AT_TO_BE_SEND,
     GSM_GPRS_STATE_AT_WAIT_FOR_RESPONSE,
     GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND,
     GSM_GPRS_STATE_ATPLUSCSQ_WAIT_FOR_RESPONSE,
     GSM_GPRS_STATE_ATPLUSCCID_TO_BE_SEND,
     GSM_GPRS_STATE_ATPLUSCCID_WAIT_FOR_RESPONSE,
-    GSM_GPRS_STATE_ATPLUSCSPN_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCGREG_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCGREG_WAIT_FOR_RESPONSE, 
+    GSM_GPRS_STATE_ATPLUSCGATT_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCGATT_WAIT_FOR_RESPONSE, 
+    GSM_GPRS_STATE_NO_SIM_CARD,
     GSM_GPRS_STATE_NO_SIGNAL,
     GSM_GPRS_STATE_DISCONNECTED,
 } gsmGprsComState_t;
@@ -53,6 +58,10 @@ private:
     float signalLevel;
 
 // private methods
+    void checkATPLUSCGATTcommand ();
+    void sendATPLUSCGATTcommand ();
+    void checkATPLUSCGREGcommand ();
+    void sendATPLUSCGREGcommand ();
     void checkATPLUSCCIDcommand ();
     void sendATPLUSCCIDcommand ();
     void checkATPLUSCSQResponse ();
