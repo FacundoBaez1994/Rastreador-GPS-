@@ -6,14 +6,13 @@
 #include "mbed.h"
 #include "string.h"
 #include "non_Blocking_Delay.h"
-#include <string>
 
 
 //=====[Declaration of private defines]========================================
 #define REFRESH_TIME_10MS         10
 #define REFRESH_TIME_1000MS       1000
-#define APN_USER_PASS "AT+CSTT=\"wap.gprs.unifon.com.ar \",\"wap\",\"wap\"\r\n" //APN / username / password (CAMBIAR SI SE CAMBIA LA SIM!)
-#define ATPLUSCIPSTART_IP_PORT "AT+CIPSTART=\"TCP\",\"186.19.62.251\",\"123\"\r\n" //PROTOCOL / EXTERNAL IP / PORT
+#define APN_USER_PASS "AT+CSTT=\"wap.gprs.unifon.com.ar \",\"wap\",\"wap\"\r\n" //APN / username / password (CAMBIAR SI SE CAMBIA LA SIM!)  internet.gprs.unifon.com.ar
+#define ATPLUSCIPSTART_IP_PORT "AT+CIPSTART=\"TCP\",\"186.19.62.251\",\"123\"" //PROTOCOL / EXTERNAL IP / PORT
 #define DEBUG
 #define LOW_LEVEL_SIGNAL 6
 #define CCID_VERIFICATION "8954078100795517486f" // (CAMBIAR SI SE CAMBIA LA SIM!)
@@ -111,7 +110,7 @@ void gsmGprsCom::connect () {
         case  GSM_GPRS_STATE_ATPLUSCGATT_WAIT_FOR_RESPONSE:  {  //CGATT WAIT
             this->checkATPLUSCGATTcommand  ();
             if (this->refreshDelay->read ()) {
-               this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGREG_TO_BE_SEND;
+               this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGATT_TO_BE_SEND;
                 #ifdef DEBUG
                 uartUsb.write ( "\r\n",  3 );  // debug only
                 char msg []  = "AT+GATT=1 NOT command responded correctly \r\n";
@@ -121,11 +120,11 @@ void gsmGprsCom::connect () {
             }
         } break;
 
-        case  GSM_GPRS_STATE_ATPLUSCIPSHUT_TO_BE_SEND:  { //CGATT SEND
+        case  GSM_GPRS_STATE_ATPLUSCIPSHUT_TO_BE_SEND:  { //CIPSHUT SEND
             this->sendATPLUSCIPSHUTcommand ();
         } break;
 
-        case  GSM_GPRS_STATE_ATPLUSCIPSHUT_WAIT_FOR_RESPONSE:  {  //CGATT WAIT
+        case  GSM_GPRS_STATE_ATPLUSCIPSHUT_WAIT_FOR_RESPONSE:  {  //CIPSHUT WAIT
             this->checkATPLUSCIPSHUTcommand  ();
             if (this->refreshDelay->read ()) {
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSHUT_TO_BE_SEND;
@@ -189,6 +188,23 @@ void gsmGprsCom::connect () {
             }
         } break;
 
+        case  GSM_GPRS_STATE_ATPLUSCIFSR_TO_BE_SEND:  { //AT+CIFSR
+            this->sendATPLUSCIFSRcommand ();
+        } break;
+
+        case  GSM_GPRS_STATE_ATPLUSCIFSR_WAIT_FOR_RESPONSE:  {  //AT+CIFSR
+            this->checkATPLUSCIFSRcommand  ();
+            if (this->refreshDelay->read ()) {
+               this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIFSR_TO_BE_SEND;
+                #ifdef DEBUG
+                uartUsb.write ( "\r\n",  3 );  // debug only
+                char msg []  = "AT+CIFSR command responded NOT correctly \r\n";
+                uartUsb.write (msg, strlen (msg));  // debug only
+                uartUsb.write ( "\r\n",  3 );  // debug only
+                #endif
+            }
+        } break;
+
         case  GSM_GPRS_STATE_ATPLUSCIPSTART_TO_BE_SEND:  { //AT+CIPSTART
             this->sendATPLUSCIPSTARTcommand ();
         } break;
@@ -240,7 +256,6 @@ void gsmGprsCom::connect () {
         } break;
 
         case  GSM_GPRS_STATE_CONNECTION_ESTABLISHED: {
-            /*
             uartUsb.write ("\r\n ", 3 );  // debug on
             this->write("AT+CIPSEND\r\n");
             uartUsb.write ("\r\n ", 3 );  // debug on
@@ -250,7 +265,8 @@ void gsmGprsCom::connect () {
             uartUsb.write ("\r\n ", 3 );  // debug on
             this->write("0x1a");
             uartUsb.write ("\r\n ", 3 );  // debug on
-            */
+            delay (1000);
+
         } break;
     }
 }
@@ -258,7 +274,6 @@ void gsmGprsCom::connect () {
 //ATPLUSCIPSTART
 void gsmGprsCom::checkATPLUSCIPSTARTcommand ()  {
     char expectedResponse [] = "CONNECT OK";
-
     if (checkUARTResponse (expectedResponse )) {
         this->gsmGprsComState = GSM_GPRS_STATE_CONNECTION_ESTABLISHED;
         #ifdef DEBUG
@@ -272,16 +287,54 @@ void gsmGprsCom::checkATPLUSCIPSTARTcommand ()  {
 
 void gsmGprsCom::sendATPLUSCIPSTARTcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
-    this->write(ATPLUSCIPSTART_IP_PORT);
+    this->write(ATPLUSCIPSTART_IP_PORT); // ATPLUSCIPSTART_IP_PORT
     uartUsb.write ("\r\n ", 3 );  // debug on
-    this->refreshDelay->write( REFRESH_TIME_1000MS * 5);
+    this->refreshDelay->write( REFRESH_TIME_1000MS );
     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSTART_WAIT_FOR_RESPONSE;
+}
+
+void gsmGprsCom::checkATPLUSCIFSRcommand ()  {
+    static bool firstIPNumberWasReceived = false;
+    static std::string strNewIP = "";
+    char receivedCharLocal = '\0';
+
+    if( this->uartGsmGprs->readable() ) {
+        this->uartGsmGprs->read(&receivedCharLocal,1);
+        if (isdigit(receivedCharLocal) || receivedCharLocal == '.') {
+            strNewIP += receivedCharLocal;    
+            if (firstIPNumberWasReceived == false) {
+                firstIPNumberWasReceived = true;
+            }
+        }
+        if ((receivedCharLocal == '\n' || receivedCharLocal ==  '\0') && firstIPNumberWasReceived == true ) {
+            firstIPNumberWasReceived = false;
+            this->localIP = strNewIP;
+            #ifdef DEBUG
+            uartUsb.write ( "\r\n",  3 );  // debug only
+            char msg []  = "IP ADDRESS ASIGNATED:\r\n";
+            uartUsb.write( msg, strlen (msg) );  // debug only
+            uartUsb.write ( "\r\n",  3 );  // debug only
+            uartUsb.write( this->localIP.c_str(), this->localIP.length() );  // debug only
+            uartUsb.write ( "\r\n",  3 );  // debug only
+            #endif
+            this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSTART_TO_BE_SEND;   //CAMBIAR ES SOLO A MODO DE PRUEBA
+            return;
+        }
+    }
+}
+
+void gsmGprsCom::sendATPLUSCIFSRcommand ()  {
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->write("AT+CIFSR\r\n "); // ATPLUSCIPSTART_IP_PORT
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->refreshDelay->write( REFRESH_TIME_1000MS );
+    this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIFSR_WAIT_FOR_RESPONSE;
 }
 
 void gsmGprsCom::checkATPLUSCIICRcommand ()  {
     char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {
-        this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSTART_TO_BE_SEND;
+        this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIFSR_TO_BE_SEND;
         #ifdef DEBUG
         uartUsb.write ( "\r\n",  3 );  // debug only
         char msg []  = "connection to internet established\r\n";
@@ -295,11 +348,12 @@ void gsmGprsCom::sendATPLUSCIICRcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write("AT+CIICR\r\n");
     uartUsb.write ("\r\n ", 3 );  // debug on
-    this->refreshDelay->write( REFRESH_TIME_1000MS * 10);
+    this->refreshDelay->write( REFRESH_TIME_1000MS);
     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIICR_WAIT_FOR_RESPONSE;
 }
 
 void gsmGprsCom::checkATPLUSCSTTcommand ()  {
+
     char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {
         this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIICR_TO_BE_SEND;
@@ -374,6 +428,8 @@ void gsmGprsCom::checkATPLUSCGATTcommand ()  {
         uartUsb.write ( "\r\n",  3 );  // debug only
         #endif
     }
+    
+    
 }
 
 void gsmGprsCom::sendATPLUSCGATTcommand ()  {
@@ -395,6 +451,7 @@ void gsmGprsCom::checkATPLUSCGREGcommand ()  {
         uartUsb.write ( "\r\n",  3 );  // debug only
         #endif
     }
+    
 }
 
 void gsmGprsCom::sendATPLUSCGREGcommand ()  {
@@ -526,25 +583,26 @@ bool gsmGprsCom::charRead( char* receivedChar )
 }
 
 
- bool gsmGprsCom::checkUARTResponse (const char* stringToCheck)
+bool gsmGprsCom::checkUARTResponse(const char* stringToCheck)
 {
-   static int responseStringPositionIndex = 0;
-   char charReceived;
-   bool moduleResponse = false;
+    static int responseStringPositionIndex = 0;
+    char charReceived;
+    bool moduleResponse = false;
 
-   if( this->charRead(&charReceived) ){
-      if (charReceived == stringToCheck [responseStringPositionIndex]) {
-         responseStringPositionIndex++;
-         if (charReceived ==stringToCheck [responseStringPositionIndex] == '\0') {
+    if (this->charRead(&charReceived)) {
+        if (charReceived == stringToCheck[responseStringPositionIndex]) {
+            responseStringPositionIndex++;
+            if (stringToCheck[responseStringPositionIndex] == '\0') {
+                responseStringPositionIndex = 0;
+                moduleResponse = true;
+            }
+        } else {
             responseStringPositionIndex = 0;
-            moduleResponse = true;
-         }
-      } else {
-         responseStringPositionIndex = 0;
-      }
-   }
-   return moduleResponse;
+        }
+    }
+    return moduleResponse;
 }
+
 
 // debug only
 static void pcSerialComCharWrite( char chr )  {

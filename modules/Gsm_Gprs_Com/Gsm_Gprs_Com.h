@@ -6,6 +6,7 @@
 #include "arm_book_lib.h"
 #include "mbed.h"
 #include "non_Blocking_Delay.h"
+#include <string>
 
 //=====[Declaration of public defines]=========================================
 
@@ -33,6 +34,9 @@ typedef enum {
     GSM_GPRS_STATE_ATPLUSCIICR_TO_BE_SEND,
     GSM_GPRS_STATE_ATPLUSCIICR_WAIT_FOR_RESPONSE,
     
+    GSM_GPRS_STATE_ATPLUSCIFSR_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCIFSR_WAIT_FOR_RESPONSE,
+
     GSM_GPRS_STATE_ATPLUSCIPSTART_TO_BE_SEND,
     GSM_GPRS_STATE_ATPLUSCIPSTART_WAIT_FOR_RESPONSE,
     GSM_GPRS_STATE_CONNECTION_ESTABLISHED,
@@ -68,11 +72,14 @@ private:
     gsmGprsComState_t gsmGprsComState;
     BufferedSerial* uartGsmGprs;
     nonBlockingDelay* refreshDelay;
+    std::string localIP;
     float signalLevel;
 
 // private methods
     void checkATPLUSCIPSTARTcommand ();
     void sendATPLUSCIPSTARTcommand ();
+    void checkATPLUSCIFSRcommand ();
+    void sendATPLUSCIFSRcommand ();
     void checkATPLUSCIICRcommand ();
     void sendATPLUSCIICRcommand ();
     void checkATPLUSCSTTcommand ();
