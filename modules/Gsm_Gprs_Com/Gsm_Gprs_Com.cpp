@@ -12,7 +12,7 @@
 #define REFRESH_TIME_10MS         10
 #define REFRESH_TIME_1000MS       1000
 #define APN_USER_PASS "AT+CSTT=\"wap.gprs.unifon.com.ar \",\"wap\",\"wap\"\r\n" //APN / username / password (CAMBIAR SI SE CAMBIA LA SIM!)  internet.gprs.unifon.com.ar
-#define ATPLUSCIPSTART_IP_PORT "AT+CIPSTART=\"TCP\",\"186.19.62.251\",\"123\"" //PROTOCOL / EXTERNAL IP / PORT
+#define ATPLUSCIPSTART_IP_PORT "AT+CIPSTART=\"TCP\",\"186.19.62.251\",\"123\"\r\n" //PROTOCOL / EXTERNAL IP / PORT
 #define DEBUG
 #define LOW_LEVEL_SIGNAL 6
 #define CCID_VERIFICATION "8954078100795517486f" // (CAMBIAR SI SE CAMBIA LA SIM!)
@@ -256,6 +256,7 @@ void gsmGprsCom::connect () {
         } break;
 
         case  GSM_GPRS_STATE_CONNECTION_ESTABLISHED: {
+            /*
             uartUsb.write ("\r\n ", 3 );  // debug on
             this->write("AT+CIPSEND\r\n");
             uartUsb.write ("\r\n ", 3 );  // debug on
@@ -266,7 +267,7 @@ void gsmGprsCom::connect () {
             this->write("0x1a");
             uartUsb.write ("\r\n ", 3 );  // debug on
             delay (1000);
-
+            */
         } break;
     }
 }
@@ -275,6 +276,7 @@ void gsmGprsCom::connect () {
 void gsmGprsCom::checkATPLUSCIPSTARTcommand ()  {
     char expectedResponse [] = "CONNECT OK";
     if (checkUARTResponse (expectedResponse )) {
+        
         this->gsmGprsComState = GSM_GPRS_STATE_CONNECTION_ESTABLISHED;
         #ifdef DEBUG
         uartUsb.write ( "\r\n",  3 );  // debug only
@@ -282,6 +284,7 @@ void gsmGprsCom::checkATPLUSCIPSTARTcommand ()  {
         uartUsb.write( msg, strlen (msg) );  // debug only
         uartUsb.write ( "\r\n",  3 );  // debug only
         #endif
+        
     }
 }
 
@@ -602,7 +605,6 @@ bool gsmGprsCom::checkUARTResponse(const char* stringToCheck)
     }
     return moduleResponse;
 }
-
 
 // debug only
 static void pcSerialComCharWrite( char chr )  {
