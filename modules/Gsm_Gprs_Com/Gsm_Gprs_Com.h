@@ -46,6 +46,16 @@ typedef enum {
     GSM_GPRS_STATE_DISCONNECTED,
 } gsmGprsComState_t;
 
+
+typedef enum {
+    GSM_GPRS_STATE_NOT_READY_TO_SEND,
+    GSM_GPRS_STATE_ATPLUSCIPSEND_TO_BE_SEND,
+    GSM_GPRS_STATE_ATPLUSCIPSEND_WAIT_FOR_RESPONSE,
+    GSM_GPRS_STATE_MESSAGE_READY_TO_BE_SEND,
+    GSM_GPRS_STATE_MESSAGE_WAITING_FOR_CONFIRMATION,
+    GSM_GPRS_STATE_MESSAGE_ALREADY_SENT,
+} gsmGprsComSendStatus_t;
+
 /*
  AT+CSQ //Signal quality test, value range is 0-31 , 31 is the best
   mySerial.println("AT+CCID"); //Read SIM information to confirm whether the SIM is plugged
@@ -63,19 +73,23 @@ public:
     gsmGprsCom ();
     gsmGprsCom (BufferedSerial * uartGsmGprs);
     void connect ();
-    void send (char * mensaje);
+    void send (const char * mensaje);
     // char* recv (char * mensaje);
     void disconnect ();
 
 private:
 // private attributtes
     gsmGprsComState_t gsmGprsComState;
+    gsmGprsComSendStatus_t gsmGprsComSendStatus;
     BufferedSerial* uartGsmGprs;
     nonBlockingDelay* refreshDelay;
     std::string localIP;
     float signalLevel;
 
 // private methods
+    void checkATPLUSCIPSENDcommand ();
+    void sendATPLUSCIPSENDcommand ();
+
     void checkATPLUSCIPSTARTcommand ();
     void sendATPLUSCIPSTARTcommand ();
     void checkATPLUSCIFSRcommand ();

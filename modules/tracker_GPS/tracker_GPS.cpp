@@ -36,6 +36,7 @@ trackerGPS::trackerGPS ()
 void trackerGPS::update ()
 {
     this->gsmGprs->connect ();
+    this->gsmGprs->send ("hola\r\n");
 
 }
 
