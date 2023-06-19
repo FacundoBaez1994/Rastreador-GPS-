@@ -54,8 +54,14 @@ gsmGprsCom::gsmGprsCom(BufferedSerial * serialCom) {
 }
 
 void gsmGprsCom::connect () {
+    static int numberOfTries = 0;
+    if (numberOfTries > 10) {
+        this->gsmGprsComState = GSM_GPRS_STATE_INIT;  //if it can't send in n five tries, stop trying to send and goes back to the first state
+    }
+
     switch (this->gsmGprsComState) { // Se puede cambiar a un arreglo de punteros a array o por un patron de diseño
         case GSM_GPRS_STATE_INIT: {
+            numberOfTries = 0;
             if (this->stopTransmition == false) {
                 this->gsmGprsComState = GSM_GPRS_STATE_AT_TO_BE_SEND;
             }
@@ -106,6 +112,7 @@ void gsmGprsCom::connect () {
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGREG_TO_BE_SEND;
                 uartUsb.write ( "\r\n", 3);  // debug only
                 char msg []  = "ATPLUSCREG? NOT command responded correctly \r\n";
+                numberOfTries++;
                 uartUsb.write( msg, strlen (msg) );  // debug only
                 uartUsb.write ( "\r\n",  3 );  // debug only
             }
@@ -121,6 +128,7 @@ void gsmGprsCom::connect () {
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGATT_TO_BE_SEND;
                 #ifdef DEBUG
                 uartUsb.write ( "\r\n",  3 );  // debug only
+                numberOfTries++;
                 char msg []  = "AT+GATT=1 NOT command responded correctly \r\n";
                 uartUsb.write( msg, strlen (msg) );  // debug only
                 uartUsb.write ( "\r\n",  3 );  // debug only
@@ -138,6 +146,7 @@ void gsmGprsCom::connect () {
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSHUT_TO_BE_SEND;
                 #ifdef DEBUG
                 uartUsb.write ( "\r\n",  3 );  // debug only
+                numberOfTries++;
                 char msg []  = "AT+CIPSHUT NOT command responded correctly \r\n";
                 uartUsb.write( msg, strlen (msg) );  // debug only
                 uartUsb.write ( "\r\n",  3 );  // debug only
@@ -153,6 +162,7 @@ void gsmGprsCom::connect () {
             this->checkATPLUSCIPMUXcommand  ();
             if (this->refreshDelay->read ()) {
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPMUX_TO_BE_SEND;
+               numberOfTries++;
                 #ifdef DEBUG
                 uartUsb.write ( "\r\n",  3 );  // debug only
                 char msg []  = "AT+CIPMUX=0  command responded NOT correctly \r\n";
@@ -169,6 +179,7 @@ void gsmGprsCom::connect () {
         case  GSM_GPRS_STATE_ATPLUSCSTT_WAIT_FOR_RESPONSE:  {  //CSTT WAIT
             this->checkATPLUSCSTTcommand  ();
             if (this->refreshDelay->read ()) {
+                numberOfTries++;
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSTT_TO_BE_SEND;
                 #ifdef DEBUG
                 uartUsb.write ( "\r\n",  3 );  // debug only
@@ -189,6 +200,7 @@ void gsmGprsCom::connect () {
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIICR_TO_BE_SEND;
                 #ifdef DEBUG
                 uartUsb.write ( "\r\n",  3 );  // debug only
+                numberOfTries++;
                 char msg []  = "AT+CIICR command responded NOT correctly \r\n";
                 uartUsb.write (msg, strlen (msg));  // debug only
                 uartUsb.write ( "\r\n",  3 );  // debug only
@@ -206,6 +218,7 @@ void gsmGprsCom::connect () {
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIFSR_TO_BE_SEND;
                 #ifdef DEBUG
                 uartUsb.write ( "\r\n",  3 );  // debug only
+                numberOfTries++;
                 char msg []  = "AT+CIFSR command responded NOT correctly \r\n";
                 uartUsb.write (msg, strlen (msg));  // debug only
                 uartUsb.write ( "\r\n",  3 );  // debug only
@@ -223,6 +236,7 @@ void gsmGprsCom::connect () {
                this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSTART_TO_BE_SEND;
                 #ifdef DEBUG
                 uartUsb.write ( "\r\n",  3 );  // debug only
+                numberOfTries++;
                 char msg []  = "AT+CIPSTART command responded NOT correctly \r\n";
                 uartUsb.write (msg, strlen (msg));  // debug only
                 uartUsb.write ( "\r\n",  3 );  // debug only
@@ -237,6 +251,7 @@ void gsmGprsCom::connect () {
             uartUsb.write (messageModuleWithoutSIMCard ,  strlen (messageModuleWithoutSIMCard) );  // debug only
             uartUsb.write ( "\r\n",  3 );  // debug only
             #endif
+            numberOfTries++;
             this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCCID_TO_BE_SEND;
         } break;
 
@@ -247,6 +262,7 @@ void gsmGprsCom::connect () {
             uartUsb.write (messageModuleDisconected,  strlen (messageModuleDisconected) );  // debug only
             uartUsb.write ( "\r\n",  3 );  // debug only
             #endif
+            numberOfTries++;
             this->gsmGprsComState = GSM_GPRS_STATE_AT_TO_BE_SEND; // Vuelve al primer estado
         } break;
 
@@ -257,6 +273,7 @@ void gsmGprsCom::connect () {
             uartUsb.write (messageModuleWithNoSignal,  strlen (messageModuleWithNoSignal) );  // debug only
             uartUsb.write ( "\r\n",  3 );  // debug only
             #endif
+            numberOfTries++;
             this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSQ_TO_BE_SEND; 
         } break;
 
@@ -264,17 +281,21 @@ void gsmGprsCom::connect () {
         } break;
 
         case  GSM_GPRS_STATE_CONNECTION_ESTABLISHED: {
+            numberOfTries = 0;
         } break;
     }
 }
 
 void gsmGprsCom::send (const char * message)  {
-    static bool numberTries = 0;
+    static int numberTries = 0;
     char confirmationToSend [1];
     confirmationToSend [0] =  '\x1a';
 
      if (this->gsmGprsComState != GSM_GPRS_STATE_CONNECTION_ESTABLISHED) {
         return;
+    }
+    if (numberTries > 5) {
+        this->gsmGprsComSendStatus = GSM_GPRS_STATE_MESSAGE_ALREADY_SENT;  //if it can't send in 5 five tries, stop trying to send and goes to disconnect
     }
     
     switch (this->gsmGprsComSendStatus) { // Se puede cambiar a un arreglo de punteros a array o por un patron de diseño
@@ -298,9 +319,6 @@ void gsmGprsCom::send (const char * message)  {
                     uartUsb.write ( "\r\n",  3 );  // debug only
                     #endif
                     numberTries++;
-                    if (numberTries > 5) {
-                        this->gsmGprsComSendStatus = GSM_GPRS_STATE_MESSAGE_ALREADY_SENT;   
-                    }
             }
         } break;
 
@@ -324,7 +342,7 @@ void gsmGprsCom::send (const char * message)  {
         } break;
 
         case  GSM_GPRS_STATE_MESSAGE_ALREADY_SENT:  {
-                    numberTries = 0;
+            numberTries = 0;
         } break;
     }
 }
