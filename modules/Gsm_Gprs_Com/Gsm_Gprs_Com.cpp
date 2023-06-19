@@ -357,11 +357,11 @@ bool gsmGprsCom::transmitionHasEnded ( ) {
 }
 
 void gsmGprsCom::transmitionStart ( ) {
-    this->stopTransmition = true;
+    this->stopTransmition = false;
 }
 
 void gsmGprsCom::transmitionStop ( ) {
-    this->stopTransmition = false;
+    this->stopTransmition = true;
 }
 
 void gsmGprsCom::disconnect ( )  {    
