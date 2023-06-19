@@ -335,6 +335,7 @@ void gsmGprsCom::send (const char * message)  {
                     #ifdef DEBUG
                     uartUsb.write ( "\r\n",  3 );  // debug only
                     char msg []  = "The message confirmation wasn't correctly recived\r\n";
+                    numberTries++;
                     uartUsb.write (msg, strlen (msg));  // debug only
                     uartUsb.write ( "\r\n",  3 );  // debug only
                     #endif
@@ -364,9 +365,16 @@ void gsmGprsCom::transmitionStop ( ) {
 }
 
 void gsmGprsCom::disconnect ( )  {    
+
+    static int numberOfTries = 0;
+    if (numberOfTries > 10) {
+        this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_SUCCESSFULL;  //if it can't send in 10 tries, carry on with the rest of the rutine
+    }
+
     switch (this->gsmGprsComDisconnectionStatus) { // Se puede cambiar a un arreglo de punteros a array o por un patron de diseño
 
         case GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS: {
+            numberOfTries = 0;
             this->gsmGprsComDisconnectionStatus =  GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPCLOSE_TO_BE_SEND;
         } break;
 
@@ -377,6 +385,7 @@ void gsmGprsCom::disconnect ( )  {
         case GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPCLOSE_WAIT_FOR_RESPONSE: {
                 this->checkATPLUSCIPCLOSEcommand (); 
                 if (this->refreshDelay->read ()) { 
+                    numberOfTries++;
                     this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPCLOSE_TO_BE_SEND;   
                     #ifdef DEBUG
                     uartUsb.write ( "\r\n",  3 );  // debug only
@@ -407,6 +416,7 @@ void gsmGprsCom::disconnect ( )  {
                     #endif
                 }
                 if (this->refreshDelay->read ()) { 
+                    numberOfTries++;
                     this->gsmGprsComDisconnectionStatus =  GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPSHUT_TO_BE_SEND;  
                     #ifdef DEBUG
                     uartUsb.write ( "\r\n",  3 );  // debug only
@@ -419,6 +429,7 @@ void gsmGprsCom::disconnect ( )  {
         } break;
 
         case  GSM_GPRS_STATE_DISCONNECTION_SUCCESSFULL:  {
+            numberOfTries=0;
             this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS; 
             this->gsmGprsComState = GSM_GPRS_STATE_INIT;
             this->gsmGprsComSendStatus = GSM_GPRS_STATE_NOT_READY_TO_SEND;
