@@ -23,6 +23,7 @@ public:
 private:
     gsmGprsCom * gsmGprs;
     nonBlockingDelay * latency;
+    int numberOfDevice;
 };
 
 

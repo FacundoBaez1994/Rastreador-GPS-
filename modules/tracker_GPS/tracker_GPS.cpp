@@ -4,7 +4,7 @@
 
 
 //=====[Declaration of private defines]========================================
-#define DELAY_2_SECONDS         2000
+#define LATENCY        2000
 
 //=====[Declaration of private data types]=====================================
 
@@ -30,39 +30,42 @@ BufferedSerial  uartGPSCom ( PG_14, PG_9, 9600 ); // debug only
 trackerGPS::trackerGPS ()
 {
     this->gsmGprs = new gsmGprsCom ( );
-    this->latency = new nonBlockingDelay ( DELAY_2_SECONDS);
+    this->latency = new nonBlockingDelay (LATENCY );
+    this->gsmGprs->transmitionStop();
+    this->numberOfDevice = 1;
     LED = ON;
     LED_2 = ON;
     TinyGPS ();
 }
 
 void trackerGPS::update ()
-<<<<<<< HEAD
 {
-    this->gsmGprs->connect ();
-    this->gsmGprs->send ("1|-34.6062048|-58.3735592\r\n");
-    if (this->gsmGprs->transmitionHasEnded ()) {
-        this->gsmGprs->disconnect ();
-    }
-=======
-{  
     char c  = '\0';
-    char str[100] = "";
+    static bool readyToReadNewGeo = true;
+    static char str[100] = "";
     float flat, flon;
     unsigned long age;
-
+    
     while ( uartGPSCom.readable() ) {
         uartGPSCom.read(&c, 1); 
-        if (encode(c)) {
+        if (encode(c) && (readyToReadNewGeo == true)) {
             f_get_position(&flat, &flon, &age);
-            sprintf ( str, "lat: %.6f  long: %.6f ", flat, flon);
+            sprintf ( str, "%d|%.7f|%.7f\r\n", this->numberOfDevice ,flat, flon);
             uartComUSB.write( str, strlen(str) );
+            this->gsmGprs->transmitionStart();
+            readyToReadNewGeo = false;
         }
     }
-     
-//    this->gsmGprs->connect ();
->>>>>>> tinyGPS
-
+    this->gsmGprs->connect ();
+    this->gsmGprs->send (str);
+    if (this->gsmGprs->transmitionHasEnded ()) {
+        this->gsmGprs->disconnect ();
+        this->gsmGprs->transmitionStop();
+        readyToReadNewGeo = true;
+    }
+  
 }
+
+
 
 //=====[Implementations of private methods]==================================
