@@ -1,8 +1,6 @@
 //=====[Libraries]=============================================================
 
-#include "arm_book_lib.h"
 #include "tracker_GPS.h"
-#include "non_Blocking_Delay.h"
 
 
 //=====[Declaration of private defines]========================================
@@ -14,6 +12,10 @@
 
 DigitalOut LED (LED2);
 DigitalOut LED_2 (LED3);
+UnbufferedSerial uartComUSB (USBTX, USBRX, 115200 );
+BufferedSerial  uartGPSCom ( PG_14, PG_9, 9600 ); // debug only
+
+
 
 //=====[Declaration of external public global variables]=======================
 
@@ -31,15 +33,35 @@ trackerGPS::trackerGPS ()
     this->latency = new nonBlockingDelay ( DELAY_2_SECONDS);
     LED = ON;
     LED_2 = ON;
+    TinyGPS ();
 }
 
 void trackerGPS::update ()
+<<<<<<< HEAD
 {
     this->gsmGprs->connect ();
     this->gsmGprs->send ("1|-34.6062048|-58.3735592\r\n");
     if (this->gsmGprs->transmitionHasEnded ()) {
         this->gsmGprs->disconnect ();
     }
+=======
+{  
+    char c  = '\0';
+    char str[100] = "";
+    float flat, flon;
+    unsigned long age;
+
+    while ( uartGPSCom.readable() ) {
+        uartGPSCom.read(&c, 1); 
+        if (encode(c)) {
+            f_get_position(&flat, &flon, &age);
+            sprintf ( str, "lat: %.6f  long: %.6f ", flat, flon);
+            uartComUSB.write( str, strlen(str) );
+        }
+    }
+     
+//    this->gsmGprs->connect ();
+>>>>>>> tinyGPS
 
 }
 

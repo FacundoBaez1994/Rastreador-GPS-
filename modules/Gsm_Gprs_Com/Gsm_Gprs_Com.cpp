@@ -800,7 +800,11 @@ void gsmGprsCom::write( const char* str ) {
     this->uartGsmGprs->write( str, strlen(str) );
 }
 
+<<<<<<< HEAD
 // inidica si pudo leer algo por UART y lo forwardea por UARTUSB
+=======
+// Compara caracter pasado como parametro contra caracter recibido por UART
+>>>>>>> tinyGPS
 bool gsmGprsCom::charRead( char* receivedChar )
 {
     char receivedCharLocal = '\0';
