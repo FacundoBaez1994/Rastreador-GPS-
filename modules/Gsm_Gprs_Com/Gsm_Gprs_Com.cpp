@@ -41,12 +41,14 @@ gsmGprsCom::gsmGprsCom() {
     this->signalLevel = 0;
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
     this->gsmGprsComSendStatus = GSM_GPRS_STATE_NOT_READY_TO_SEND;
+    this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS;
 }
 
 gsmGprsCom::gsmGprsCom(BufferedSerial * serialCom) {
     this->uartGsmGprs = serialCom;
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
     this->gsmGprsComSendStatus = GSM_GPRS_STATE_NOT_READY_TO_SEND;
+    this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS;
 }
 
 void gsmGprsCom::connect () {
@@ -261,15 +263,12 @@ void gsmGprsCom::connect () {
         } break;
     }
 }
+
 void gsmGprsCom::send (const char * message)  {
-    static bool waitingForConfirmation = false;
+    static bool numberTries = 0;
     char confirmationToSend [1];
     confirmationToSend [0] =  '\x1a';
-/*
-    GSM_GPRS_STATE_MESSAGE_WAITING_FOR_CONFIRMATION,
-    GSM_GPRS_STATE_MESSAGE_ALREADY_SENT,
 
-*/   
      if (this->gsmGprsComState != GSM_GPRS_STATE_CONNECTION_ESTABLISHED) {
         return;
     }
@@ -294,6 +293,10 @@ void gsmGprsCom::send (const char * message)  {
                     uartUsb.write (msg, strlen (msg));  // debug only
                     uartUsb.write ( "\r\n",  3 );  // debug only
                     #endif
+                    numberTries++;
+                    if (numberTries > 5) {
+                        this->gsmGprsComSendStatus = GSM_GPRS_STATE_MESSAGE_ALREADY_SENT;   
+                    }
             }
         } break;
 
@@ -317,8 +320,102 @@ void gsmGprsCom::send (const char * message)  {
         } break;
 
         case  GSM_GPRS_STATE_MESSAGE_ALREADY_SENT:  {
+                    numberTries = 0;
         } break;
     }
+}
+
+bool gsmGprsCom::transmitionHasEnded ( ) {
+    if (this->gsmGprsComSendStatus == GSM_GPRS_STATE_MESSAGE_ALREADY_SENT) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void gsmGprsCom::disconnect ( )  {    
+    switch (this->gsmGprsComDisconnectionStatus) { // Se puede cambiar a un arreglo de punteros a array o por un patron de diseño
+
+        case GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS: {
+            this->gsmGprsComDisconnectionStatus =  GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPCLOSE_TO_BE_SEND;
+        } break;
+
+        case GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPCLOSE_TO_BE_SEND: {
+            this->sendAATPLUSCIPCLOSEcommand ();
+        } break;
+
+        case GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPCLOSE_WAIT_FOR_RESPONSE: {
+                this->checkATPLUSCIPCLOSEcommand (); 
+                if (this->refreshDelay->read ()) { 
+                    this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPCLOSE_TO_BE_SEND;   
+                    #ifdef DEBUG
+                    uartUsb.write ( "\r\n",  3 );  // debug only
+                    char msg []  = "AT+CIPCLOSE command responded NOT correctly \r\n";
+                    uartUsb.write (msg, strlen (msg));  // debug only
+                    uartUsb.write ( "\r\n",  3 );  // debug only
+                    #endif
+            }
+        } break;
+
+       case  GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPSHUT_TO_BE_SEND:   {
+            uartUsb.write ("\r\n ", 3 );  // debug on
+            this->write("AT+CIPSHUT\r\n"); // ATPLUSCIPSTART_IP_PORT
+            uartUsb.write ("\r\n ", 3 );  // debug on
+            this->refreshDelay->write( REFRESH_TIME_1000MS );
+            this->gsmGprsComDisconnectionStatus =  GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPSHUT_WAIT_FOR_RESPONSE;
+        } break;
+
+        case  GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPSHUT_WAIT_FOR_RESPONSE: {
+                char expectedResponse [] = "SHUT OK";
+                 if (checkUARTResponse (expectedResponse )) {        
+                    this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_SUCCESSFULL;
+                    #ifdef DEBUG
+                    uartUsb.write ( "\r\n",  3 );  // debug only
+                    char msg []  = "Cip shut ok\r\n";
+                    uartUsb.write( msg, strlen (msg) );  // debug only
+                    uartUsb.write ( "\r\n",  3 );  // debug only
+                    #endif
+                }
+                if (this->refreshDelay->read ()) { 
+                    this->gsmGprsComDisconnectionStatus =  GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPSHUT_TO_BE_SEND;  
+                    #ifdef DEBUG
+                    uartUsb.write ( "\r\n",  3 );  // debug only
+                    char msg []  = "AT+CIPSHUT command responded NOT correctly \r\n";
+                    uartUsb.write (msg, strlen (msg));  // debug only
+                    uartUsb.write ( "\r\n",  3 );  // debug only
+                    #endif
+            }
+    
+        } break;
+
+        case  GSM_GPRS_STATE_DISCONNECTION_SUCCESSFULL:  {
+            this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS; 
+            this->gsmGprsComState = GSM_GPRS_STATE_INIT;
+            this->gsmGprsComSendStatus = GSM_GPRS_STATE_NOT_READY_TO_SEND;
+
+        } break;
+    }
+}
+
+void gsmGprsCom::checkATPLUSCIPCLOSEcommand () {
+        char expectedResponse [] = "OK";
+    if (checkUARTResponse (expectedResponse )) {        
+        this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPSHUT_TO_BE_SEND;
+        #ifdef DEBUG
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        char msg []  = "Cip close ok\r\n";
+        uartUsb.write( msg, strlen (msg) );  // debug only
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        #endif
+    }
+}
+
+void gsmGprsCom::sendAATPLUSCIPCLOSEcommand ()  {
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->write("AT+CIPCLOSE\r\n"); // ATPLUSCIPSTART_IP_PORT
+    uartUsb.write ("\r\n ", 3 );  // debug on
+    this->refreshDelay->write( REFRESH_TIME_1000MS );
+    this->gsmGprsComDisconnectionStatus =  GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPCLOSE_WAIT_FOR_RESPONSE;
 }
 
 void gsmGprsCom::checkmessageSendState () {
@@ -592,7 +689,7 @@ void gsmGprsCom::checkATPLUSCSQResponse (  ) {
     if( this->charRead(&charReceived)) {
         if (charReceived != stringToCheck [responseStringPositionIndex] && responseStringPositionIndex < (strlen (stringToCheck) )   )  { 
              responseStringPositionIndex = 0;
-             std::string strSignalQuality = "";
+             strSignalQuality = ""; //
         }
         if ( (responseStringPositionIndex >= (strlen (stringToCheck) - 1 ))   ) {
             if (isdigit(charReceived)) {
@@ -613,12 +710,12 @@ void gsmGprsCom::checkATPLUSCSQResponse (  ) {
                 if (this->signalLevel < LOW_LEVEL_SIGNAL) {
                     this->gsmGprsComState = GSM_GPRS_STATE_NO_SIGNAL;
                     responseStringPositionIndex = 0;
-                    std::string strSignalQuality = "";
+                    strSignalQuality = "";
                     return;
                 } else {
                     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCCID_TO_BE_SEND;
                     responseStringPositionIndex = 0;
-                    std::string strSignalQuality = "";
+                    strSignalQuality = "";
                     return;
                 }
             }  
