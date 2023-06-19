@@ -42,6 +42,7 @@ gsmGprsCom::gsmGprsCom() {
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
     this->gsmGprsComSendStatus = GSM_GPRS_STATE_NOT_READY_TO_SEND;
     this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS;
+    this->stopTransmition = false;
 }
 
 gsmGprsCom::gsmGprsCom(BufferedSerial * serialCom) {
@@ -49,12 +50,15 @@ gsmGprsCom::gsmGprsCom(BufferedSerial * serialCom) {
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
     this->gsmGprsComSendStatus = GSM_GPRS_STATE_NOT_READY_TO_SEND;
     this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS;
+    this->stopTransmition = false;
 }
 
 void gsmGprsCom::connect () {
     switch (this->gsmGprsComState) { // Se puede cambiar a un arreglo de punteros a array o por un patron de diseño
         case GSM_GPRS_STATE_INIT: {
-            this->gsmGprsComState = GSM_GPRS_STATE_AT_TO_BE_SEND;
+            if (this->stopTransmition == false) {
+                this->gsmGprsComState = GSM_GPRS_STATE_AT_TO_BE_SEND;
+            }
         } break;
 
         case GSM_GPRS_STATE_AT_TO_BE_SEND: {
@@ -333,6 +337,14 @@ bool gsmGprsCom::transmitionHasEnded ( ) {
     }
 }
 
+bool gsmGprsCom::transmitionStart ( ) {
+    this->stopTransmition = true;
+}
+
+bool gsmGprsCom::transmitionStop ( ) {
+    this->stopTransmition = false;
+}
+
 void gsmGprsCom::disconnect ( )  {    
     switch (this->gsmGprsComDisconnectionStatus) { // Se puede cambiar a un arreglo de punteros a array o por un patron de diseño
 
@@ -506,6 +518,7 @@ void gsmGprsCom::checkATPLUSCIFSRcommand ()  {
             uartUsb.write( this->localIP.c_str(), this->localIP.length() );  // debug only
             uartUsb.write ( "\r\n",  3 );  // debug only
             #endif
+            strNewIP = "";
             this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSTART_TO_BE_SEND;   //CAMBIAR ES SOLO A MODO DE PRUEBA
             return;
         }

@@ -86,6 +86,9 @@ public:
     // char* recv (char * mensaje);
     void disconnect ();
     bool transmitionHasEnded ();
+    void transmitionStart ();
+    void transmitionStop ();
+
 
 private:
 // private attributtes
@@ -96,6 +99,7 @@ private:
     nonBlockingDelay* refreshDelay;
     std::string localIP;
     float signalLevel;
+    bool stopTransmition;
 
 // private methods
     void checkATPLUSCIPCLOSEcommand ();
