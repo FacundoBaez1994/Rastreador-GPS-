@@ -261,27 +261,14 @@ void gsmGprsCom::connect () {
         } break;
     }
 }
-
 void gsmGprsCom::send (const char * message)  {
     static bool waitingForConfirmation = false;
     char confirmationToSend [1];
     confirmationToSend [0] =  '\x1a';
 /*
-    GSM_GPRS_STATE_MESSAGE_READY_TO_BE_SEND,
     GSM_GPRS_STATE_MESSAGE_WAITING_FOR_CONFIRMATION,
     GSM_GPRS_STATE_MESSAGE_ALREADY_SENT,
 
-    
-    if (  waitingForConfirmation == false) {
-        uartUsb.write ("\r\n ", 3 );  // debug on
-        this->write("AT+CIPSEND\r\n");
-        uartUsb.write ("\r\n ", 3 );  // debug on
-        this->write(message);
-        uartUsb.write ("\r\n ", 3 );  // debug on
-        this->write(confirmationToSend);
-        this->refreshDelay->write( REFRESH_TIME_1000MS );
-        waitingForConfirmation = true;
-    }
 */   
      if (this->gsmGprsComState != GSM_GPRS_STATE_CONNECTION_ESTABLISHED) {
         return;
@@ -294,39 +281,61 @@ void gsmGprsCom::send (const char * message)  {
         } break;
 
         case GSM_GPRS_STATE_ATPLUSCIPSEND_TO_BE_SEND: {
-            this->sendATPLUSCIPSENDcommand ();
+            this->sendATPLUSCIPSENDcommand (strlen (message));
         } break;
 
         case GSM_GPRS_STATE_ATPLUSCIPSEND_WAIT_FOR_RESPONSE: {
                 this->checkATPLUSCIPSENDcommand (); 
                 if (this->refreshDelay->read ()) { 
-                     this->gsmGprsComSendStatus = GSM_GPRS_STATE_ATPLUSCIPSEND_TO_BE_SEND;
-                    /*
-                   
+                    this->gsmGprsComSendStatus = GSM_GPRS_STATE_ATPLUSCIPSEND_TO_BE_SEND;   
                     #ifdef DEBUG
                     uartUsb.write ( "\r\n",  3 );  // debug only
                     char msg []  = "AT+CIPSEND command responded NOT correctly \r\n";
                     uartUsb.write (msg, strlen (msg));  // debug only
                     uartUsb.write ( "\r\n",  3 );  // debug only
                     #endif
-                    */
             }
-
         } break;
 
-       case   GSM_GPRS_STATE_MESSAGE_READY_TO_BE_SEND:  {
+       case  GSM_GPRS_STATE_MESSAGE_READY_TO_BE_SEND:  {
+            this->write(message);
+            this->gsmGprsComSendStatus = GSM_GPRS_STATE_MESSAGE_WAITING_FOR_CONFIRMATION; 
+            this->refreshDelay->write( REFRESH_TIME_1000MS);
         } break;
+
+        case GSM_GPRS_STATE_MESSAGE_WAITING_FOR_CONFIRMATION: {
+            this->checkmessageSendState (); 
+                if (this->refreshDelay->read ()) { 
+                    this->gsmGprsComSendStatus = GSM_GPRS_STATE_MESSAGE_READY_TO_BE_SEND;   
+                    #ifdef DEBUG
+                    uartUsb.write ( "\r\n",  3 );  // debug only
+                    char msg []  = "The message confirmation wasn't correctly recived\r\n";
+                    uartUsb.write (msg, strlen (msg));  // debug only
+                    uartUsb.write ( "\r\n",  3 );  // debug only
+                    #endif
+            }
+        } break;
+
+        case  GSM_GPRS_STATE_MESSAGE_ALREADY_SENT:  {
+        } break;
+    }
+}
+
+void gsmGprsCom::checkmessageSendState () {
+        char expectedResponse [] = "SEND OK";
+    if (checkUARTResponse (expectedResponse )) {        
+        this->gsmGprsComSendStatus = GSM_GPRS_STATE_MESSAGE_ALREADY_SENT;
+        #ifdef DEBUG
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        char msg []  = "message send!\r\n";
+        uartUsb.write( msg, strlen (msg) );  // debug only
+        uartUsb.write ( "\r\n",  3 );  // debug only
+        #endif
     }
 }
 
 //ATPLUSCIPSEND
 void gsmGprsCom::checkATPLUSCIPSENDcommand ()  {
-    char charReceived;
-    if (this->charRead(&charReceived)) {
-        pcSerialComCharWrite( charReceived );
-    }
-
-    /*
     char receivedCharLocal;
     char expectedResponse  = '>';
     if( this->uartGsmGprs->readable() ) {
@@ -342,38 +351,12 @@ void gsmGprsCom::checkATPLUSCIPSENDcommand ()  {
             #endif
         }
     }
-   
+}
 
-
-        if (checkUARTResponse (expectedResponse)) {
-        char expectedResponse [] = ">";
-    if (checkUARTResponse (expectedResponse)) {
-        this->gsmGprsComSendStatus = GSM_GPRS_STATE_MESSAGE_READY_TO_BE_SEND;
-        #ifdef DEBUG
-        uartUsb.write ( "\r\n",  3 );  // debug only
-        char msg []  = "ready to send\r\n";
-        uartUsb.write( msg, strlen (msg) );  // debug only
-        uartUsb.write ( "\r\n",  3 );  // debug only
-        #endif
-    }
-
-        char charReceived;
-    if (this->charRead(&charReceived)) {
-        pcSerialComCharWrite( charReceived );
-    }
-        */
-     }
-
-
-void gsmGprsCom::sendATPLUSCIPSENDcommand ()  {
-        char confirmationToSend [3];
-    confirmationToSend [0] =  '\x1a';
-    confirmationToSend [1] =  '\r';
-    confirmationToSend [2] =  '\n';
-    // this->write(confirmationToSend);
-    this->write("AT+CIPSEND\r\n");
-
-    uartUsb.write ("\r\n ", 3 );  // debug on
+void gsmGprsCom::sendATPLUSCIPSENDcommand (int stringlen)  {
+    char strToSend[50] = "";
+   sprintf( strToSend, "AT+CIPSEND=%d\r\n", stringlen);
+    this->write(strToSend);
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->refreshDelay->write( REFRESH_TIME_1000MS);
     this->gsmGprsComSendStatus = GSM_GPRS_STATE_ATPLUSCIPSEND_WAIT_FOR_RESPONSE;

@@ -87,8 +87,9 @@ private:
     float signalLevel;
 
 // private methods
+    void checkmessageSendState ();
     void checkATPLUSCIPSENDcommand ();
-    void sendATPLUSCIPSENDcommand ();
+    void sendATPLUSCIPSENDcommand (int strLen);
 
     void checkATPLUSCIPSTARTcommand ();
     void sendATPLUSCIPSTARTcommand ();
