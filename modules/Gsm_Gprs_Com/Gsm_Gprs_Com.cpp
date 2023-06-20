@@ -356,7 +356,18 @@ bool gsmGprsCom::transmitionHasEnded ( ) {
     }
 }
 
+bool gsmGprsCom::disconnectionProcessHasEnded ( ) {
+    if (this->gsmGprsComDisconnectionStatus == GSM_GPRS_STATE_DISCONNECTION_SUCCESSFULL) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void gsmGprsCom::transmitionStart ( ) {
+    this->gsmGprsComState = GSM_GPRS_STATE_INIT;
+    this->gsmGprsComSendStatus = GSM_GPRS_STATE_NOT_READY_TO_SEND;
+    this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS;
     this->stopTransmition = false;
 }
 

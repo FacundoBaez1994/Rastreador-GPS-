@@ -4,7 +4,7 @@
 
 
 //=====[Declaration of private defines]========================================
-#define LATENCY        2000
+#define LATENCY        20000
 
 //=====[Declaration of private data types]=====================================
 
@@ -42,28 +42,35 @@ void trackerGPS::update ()
 {
     char c  = '\0';
     static bool readyToReadNewGeo = true;
+    static bool timeToSend = false;
     static char str[100] = "";
     float flat, flon;
     unsigned long age;
-    
-    while ( uartGPSCom.readable() ) {
-        uartGPSCom.read(&c, 1); 
-        if (encode(c) && (readyToReadNewGeo == true)) {
-            f_get_position(&flat, &flon, &age);
-            sprintf ( str, "%d|%.7f|%.7f\r\n", this->numberOfDevice ,flat, flon);
-            uartComUSB.write( str, strlen(str) );
-            this->gsmGprs->transmitionStart();
-            readyToReadNewGeo = false;
+    if( this->latency->read() || (timeToSend == true) ) {
+        timeToSend = true;
+
+        while ( uartGPSCom.readable() ) {
+            uartGPSCom.read(&c, 1); 
+            if (encode(c) && (readyToReadNewGeo == true)) {
+                f_get_position(&flat, &flon, &age);
+                sprintf ( str, "%d|%.7f|%.7f\r\n", this->numberOfDevice ,flat, flon);
+                uartComUSB.write( str, strlen(str) );
+                this->gsmGprs->transmitionStart();
+                readyToReadNewGeo = false;
+            }
         }
-    }
-    this->gsmGprs->connect ();
-    this->gsmGprs->send (str);
-    if (this->gsmGprs->transmitionHasEnded ()) {
-        this->gsmGprs->disconnect ();
-        this->gsmGprs->transmitionStop();
-        readyToReadNewGeo = true;
-    }
-  
+        this->gsmGprs->connect ();
+        this->gsmGprs->send (str);
+        if (this->gsmGprs->transmitionHasEnded ()) {
+            this->gsmGprs->disconnect ();
+            this->gsmGprs->transmitionStop();
+            if (this->gsmGprs->disconnectionProcessHasEnded()) {
+                readyToReadNewGeo = true;
+                timeToSend = false;
+                this->latency->write (LATENCY );
+            }
+        }
+    } 
 }
 
 

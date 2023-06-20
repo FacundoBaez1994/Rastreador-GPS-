@@ -88,6 +88,7 @@ public:
     bool transmitionHasEnded ();
     void transmitionStart ();
     void transmitionStop ();
+    bool disconnectionProcessHasEnded ();
 
 
 private:
