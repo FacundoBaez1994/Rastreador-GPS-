@@ -35,6 +35,12 @@ UnbufferedSerial uartUsb(USBTX, USBRX, 115200 ); // debug only
 
 //=====[Implementations of public methods]===================================
 
+    /** Creates a new gsmGprsCom object
+     *
+     * initializes Serial port and non blocking delay 
+     * Puts gsmGprsCom ready to conect to GSM GPRS network
+     *  @return         new gsmGprsCom object
+     */
 gsmGprsCom::gsmGprsCom() {
     this->refreshDelay =  new nonBlockingDelay ( REFRESH_TIME_1000MS  ); 
     this->uartGsmGprs = new BufferedSerial ( PE_8, PE_7, 9600 ); // TX RX
@@ -45,6 +51,13 @@ gsmGprsCom::gsmGprsCom() {
     this->stopTransmition = false;
 }
 
+/** Creates a new gsmGprsCom object
+*
+* initializes Serial port
+* Puts gsmGprsCom ready to conect to GSM GPRS network
+* @return gsmGprsCom object
+* @param serialCom a already intialize Serial Uart Port
+*/
 gsmGprsCom::gsmGprsCom(BufferedSerial * serialCom) {
     this->uartGsmGprs = serialCom;
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
@@ -52,6 +65,16 @@ gsmGprsCom::gsmGprsCom(BufferedSerial * serialCom) {
     this->gsmGprsComDisconnectionStatus = GSM_GPRS_STATE_DISCONNECTION_NOT_IN_PROCESS;
     this->stopTransmition = false;
 }
+
+/** 
+* Connects module to GSM GPRS network if it's not already connected
+* Reads Module and SIM Card Status
+* Obtains public IP from company
+* Obtains signal level
+* Implementation of FSM GSM_GPRS_STATE
+* Connects to an especific TCP/IP server
+* @note precondition: bolean attribute stopTransmition must be seat on false 
+*/
 
 void gsmGprsCom::connect () {
     static int numberOfTries = 0;
@@ -286,6 +309,12 @@ void gsmGprsCom::connect () {
     }
 }
 
+/** 
+* sends through TCP IP protocol a string to a TCP server with a connection already established
+* implementation of FSM gsmGprsComSendStatus
+* @param message the meesage to be send
+* @note precondition: gsmGprsComState should be equal to GSM_GPRS_STATE_CONNECTION_ESTABLISHED
+*/
 void gsmGprsCom::send (const char * message)  {
     static int numberTries = 0;
     char confirmationToSend [1];
@@ -348,6 +377,11 @@ void gsmGprsCom::send (const char * message)  {
     }
 }
 
+
+/**  getter
+* Indicates if the message is was sent
+* @retuns a bool meaning true if the transmition has ended
+*/
 bool gsmGprsCom::transmitionHasEnded ( ) {
     if (this->gsmGprsComSendStatus == GSM_GPRS_STATE_MESSAGE_ALREADY_SENT) {
         return true;
@@ -356,6 +390,10 @@ bool gsmGprsCom::transmitionHasEnded ( ) {
     }
 }
 
+/** getter
+* Indicates if diconnection process has ended
+* @retuns a bool meaning true if the diconnection process was successfull
+*/
 bool gsmGprsCom::disconnectionProcessHasEnded ( ) {
     if (this->gsmGprsComDisconnectionStatus == GSM_GPRS_STATE_DISCONNECTION_SUCCESSFULL) {
         return true;
@@ -363,6 +401,7 @@ bool gsmGprsCom::disconnectionProcessHasEnded ( ) {
         return false;
     }
 }
+
 
 void gsmGprsCom::transmitionStart ( ) {
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;

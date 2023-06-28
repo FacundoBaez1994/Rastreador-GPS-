@@ -75,6 +75,13 @@ typedef enum {
 
 
 //=====[Declaration of public classes]=========================
+     
+/**
+ * Class implementation for a driver beetween NUCLEO uc and GSM GPRS Module with SIM CARD
+ * that uses UART interface
+ * Sends, receives and interpret AT commands in order to connect, disconect and send messages through
+ * TCP IP protocolo
+ */
 class gsmGprsCom {
 
 public:
