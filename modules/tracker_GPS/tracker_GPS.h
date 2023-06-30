@@ -16,6 +16,13 @@
 //=====[Declaration of public data types]======================================
 
 //=====[Declaration of public classes]=========================
+/*
+ * Class implementation for a GPS tracker
+ * High hierarchy class
+ * it will be instantiated and used from the main function
+ * handles a GPS module, a GSM GPRS module and a delay in order to send the geolocation of the device
+ * to a TCP IP server
+ */
 class trackerGPS {
 public:
     trackerGPS ();

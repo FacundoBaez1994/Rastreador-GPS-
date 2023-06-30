@@ -12,6 +12,10 @@
 typedef uint64_t tick_t;
 
 //=====[Declaration of public classes]=========================================
+/*
+ * Class implementation for a delay that not block the rest of the rutine of the microcontroller 
+ * Uses a ticker to count time (hardware)
+ */
 class nonBlockingDelay {
 public:
 

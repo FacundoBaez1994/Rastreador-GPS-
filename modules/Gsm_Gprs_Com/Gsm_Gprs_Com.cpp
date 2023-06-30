@@ -2,7 +2,6 @@
 //=====[Libraries]=============================================================
 #include "Gsm_Gprs_Com.h"
 #include "arm_book_lib.h"
-#include "wifi_com.h"
 #include "mbed.h"
 #include "string.h"
 #include "non_Blocking_Delay.h"
@@ -37,7 +36,7 @@ UnbufferedSerial uartUsb(USBTX, USBRX, 115200 ); // debug only
 
     /** Creates a new gsmGprsCom object
      *
-     * initializes Serial port and non blocking delay 
+     * @brief initializes Serial port and non blocking delay 
      * Puts gsmGprsCom ready to conect to GSM GPRS network
      *  @return         new gsmGprsCom object
      */
@@ -53,7 +52,7 @@ gsmGprsCom::gsmGprsCom() {
 
 /** Creates a new gsmGprsCom object
 *
-* initializes Serial port
+* @brief initializes Serial port
 * Puts gsmGprsCom ready to conect to GSM GPRS network
 * @return gsmGprsCom object
 * @param serialCom a already intialize Serial Uart Port
@@ -67,7 +66,7 @@ gsmGprsCom::gsmGprsCom(BufferedSerial * serialCom) {
 }
 
 /** 
-* Connects module to GSM GPRS network if it's not already connected
+* @brief Connects module to GSM GPRS network if it's not already connected
 * Reads Module and SIM Card Status
 * Obtains public IP from company
 * Obtains signal level
@@ -310,7 +309,7 @@ void gsmGprsCom::connect () {
 }
 
 /** 
-* sends through TCP IP protocol a string to a TCP server with a connection already established
+* @brief sends through TCP IP protocol a string to a TCP server with a connection already established
 * implementation of FSM gsmGprsComSendStatus
 * @param message the meesage to be send
 * @note precondition: gsmGprsComState should be equal to GSM_GPRS_STATE_CONNECTION_ESTABLISHED
@@ -379,8 +378,8 @@ void gsmGprsCom::send (const char * message)  {
 
 
 /**  getter
-* Indicates if the message is was sent
-* @retuns a bool meaning true if the transmition has ended
+* @brief Indicates if the message is was sent
+* @return a bool meaning true if the transmition has ended
 */
 bool gsmGprsCom::transmitionHasEnded ( ) {
     if (this->gsmGprsComSendStatus == GSM_GPRS_STATE_MESSAGE_ALREADY_SENT) {
@@ -391,8 +390,8 @@ bool gsmGprsCom::transmitionHasEnded ( ) {
 }
 
 /** getter
-* Indicates if diconnection process has ended
-* @retuns a bool meaning true if the diconnection process was successfull
+* @brief Indicates if diconnection process has ended
+* @return a bool meaning true if the diconnection process was successfull
 */
 bool gsmGprsCom::disconnectionProcessHasEnded ( ) {
     if (this->gsmGprsComDisconnectionStatus == GSM_GPRS_STATE_DISCONNECTION_SUCCESSFULL) {
@@ -402,7 +401,9 @@ bool gsmGprsCom::disconnectionProcessHasEnded ( ) {
     }
 }
 
-
+/** 
+* @brief enables the transmition process
+*/
 void gsmGprsCom::transmitionStart ( ) {
     this->gsmGprsComState = GSM_GPRS_STATE_INIT;
     this->gsmGprsComSendStatus = GSM_GPRS_STATE_NOT_READY_TO_SEND;
@@ -410,10 +411,17 @@ void gsmGprsCom::transmitionStart ( ) {
     this->stopTransmition = false;
 }
 
+/** 
+* @brief unenables the transmition process
+*/
 void gsmGprsCom::transmitionStop ( ) {
     this->stopTransmition = true;
 }
 
+/** 
+* @brief Closes the TCP connection
+* implementation of the gsmGprsComDisconnectionStatus FSM
+*/
 void gsmGprsCom::disconnect ( )  {    
 
     static int numberOfTries = 0;
@@ -488,6 +496,9 @@ void gsmGprsCom::disconnect ( )  {
     }
 }
 
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CIPCLOSE correclty
+*/
 void gsmGprsCom::checkATPLUSCIPCLOSEcommand () {
         char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {        
@@ -501,6 +512,9 @@ void gsmGprsCom::checkATPLUSCIPCLOSEcommand () {
     }
 }
 
+/** 
+* @brief Sends the command AT+CIPCLOSE through UART port to the GSM GPRS module
+*/
 void gsmGprsCom::sendAATPLUSCIPCLOSEcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write("AT+CIPCLOSE\r\n"); // ATPLUSCIPSTART_IP_PORT
@@ -509,6 +523,9 @@ void gsmGprsCom::sendAATPLUSCIPCLOSEcommand ()  {
     this->gsmGprsComDisconnectionStatus =  GSM_GPRS_STATE_DISCONNECTION_ATPLUSCIPCLOSE_WAIT_FOR_RESPONSE;
 }
 
+/** 
+* @brief Checks the UART port if the module has sent the message without errors
+*/
 void gsmGprsCom::checkmessageSendState () {
         char expectedResponse [] = "SEND OK";
     if (checkUARTResponse (expectedResponse )) {        
@@ -522,7 +539,9 @@ void gsmGprsCom::checkmessageSendState () {
     }
 }
 
-//ATPLUSCIPSEND
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CIPSEND correclty
+*/
 void gsmGprsCom::checkATPLUSCIPSENDcommand ()  {
     char receivedCharLocal;
     char expectedResponse  = '>';
@@ -541,6 +560,10 @@ void gsmGprsCom::checkATPLUSCIPSENDcommand ()  {
     }
 }
 
+/** 
+* @brief Sends the command AT+CIPSEND through UART port to the GSM GPRS module with the lenght of the message
+* @param stringlen the lenght of the message to be send
+*/
 void gsmGprsCom::sendATPLUSCIPSENDcommand (int stringlen)  {
     char strToSend[50] = "";
    sprintf( strToSend, "AT+CIPSEND=%d\r\n", stringlen);
@@ -550,7 +573,9 @@ void gsmGprsCom::sendATPLUSCIPSENDcommand (int stringlen)  {
     this->gsmGprsComSendStatus = GSM_GPRS_STATE_ATPLUSCIPSEND_WAIT_FOR_RESPONSE;
 }
 
-//ATPLUSCIPSTART
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CIPSTART correclty
+*/
 void gsmGprsCom::checkATPLUSCIPSTARTcommand ()  {
     char expectedResponse [] = "ALREADY CONNECT";
     if (checkUARTResponse (expectedResponse )) {        
@@ -565,6 +590,10 @@ void gsmGprsCom::checkATPLUSCIPSTARTcommand ()  {
     }
 }
 
+/** 
+* @brief Sends the command AT+CIPSTART through UART port to the GSM GPRS module with the IP direction and port number
+* @note precondition: The TCP port and IP public direction must be correctly written in a MACRO call ATPLUSCIPSTART_IP_PORT
+*/
 void gsmGprsCom::sendATPLUSCIPSTARTcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write(ATPLUSCIPSTART_IP_PORT); // ATPLUSCIPSTART_IP_PORT
@@ -573,6 +602,10 @@ void gsmGprsCom::sendATPLUSCIPSTARTcommand ()  {
     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSTART_WAIT_FOR_RESPONSE;
 }
 
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CIFSR correclty
+* Retrieves the IP asignated to GSM module from the GSM network and load it in the localIP attributte of the current object
+*/
 void gsmGprsCom::checkATPLUSCIFSRcommand ()  {
     static bool firstIPNumberWasReceived = false;
     static std::string strNewIP = "";
@@ -604,6 +637,9 @@ void gsmGprsCom::checkATPLUSCIFSRcommand ()  {
     }
 }
 
+/** 
+* @brief Sends the command AT+CIFSR through UART port to the GSM GPRS module
+*/
 void gsmGprsCom::sendATPLUSCIFSRcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write("AT+CIFSR\r\n "); // ATPLUSCIPSTART_IP_PORT
@@ -612,6 +648,9 @@ void gsmGprsCom::sendATPLUSCIFSRcommand ()  {
     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIFSR_WAIT_FOR_RESPONSE;
 }
 
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CIICR correctly
+*/
 void gsmGprsCom::checkATPLUSCIICRcommand ()  {
     char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {
@@ -625,6 +664,9 @@ void gsmGprsCom::checkATPLUSCIICRcommand ()  {
     }
 }
 
+/** 
+* @brief Sends the command AT+CIICR through UART port to the GSM GPRS module
+*/
 void gsmGprsCom::sendATPLUSCIICRcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write("AT+CIICR\r\n");
@@ -633,8 +675,10 @@ void gsmGprsCom::sendATPLUSCIICRcommand ()  {
     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIICR_WAIT_FOR_RESPONSE;
 }
 
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CSTT correctly
+*/
 void gsmGprsCom::checkATPLUSCSTTcommand ()  {
-
     char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {
         this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIICR_TO_BE_SEND;
@@ -647,6 +691,10 @@ void gsmGprsCom::checkATPLUSCSTTcommand ()  {
     }
 }
 
+/** 
+* @brief Sends the command AT+CSTT through UART port to the GSM GPRS module
+* @note precondition: the APN User and password must be correctly loaded into the APN_USER_PASS MACRO
+*/
 void gsmGprsCom::sendATPLUSCSTTcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write(APN_USER_PASS);
@@ -655,6 +703,9 @@ void gsmGprsCom::sendATPLUSCSTTcommand ()  {
     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCSTT_WAIT_FOR_RESPONSE;
 }
 
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CIPMUX correctly
+*/
 void gsmGprsCom::checkATPLUSCIPMUXcommand ()  {
     char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {
@@ -668,6 +719,9 @@ void gsmGprsCom::checkATPLUSCIPMUXcommand ()  {
     }
 }
 
+/** 
+* @brief Sends the command AT+CIPMUX through UART port to the GSM GPRS module
+*/
 void gsmGprsCom::sendATPLUSCIPMUXcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write( "AT+CIPMUX=0\r\n");
@@ -676,7 +730,9 @@ void gsmGprsCom::sendATPLUSCIPMUXcommand ()  {
     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPMUX_WAIT_FOR_RESPONSE;
 }
 
-
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CIPSHUT correctly
+*/
 void gsmGprsCom::checkATPLUSCIPSHUTcommand ()  {
     char expectedResponse [] = "SHUT OK";
     if (checkUARTResponse (expectedResponse )) {
@@ -690,6 +746,9 @@ void gsmGprsCom::checkATPLUSCIPSHUTcommand ()  {
     }
 }
 
+/** 
+* @brief Sends the command AT+CIPSHUT through UART port to the GSM GPRS module
+*/
 void gsmGprsCom::sendATPLUSCIPSHUTcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write( "AT+CIPSHUT\r\n");
@@ -698,6 +757,9 @@ void gsmGprsCom::sendATPLUSCIPSHUTcommand ()  {
     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCIPSHUT_WAIT_FOR_RESPONSE;
 }
 
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CGATT correctly
+*/
 void gsmGprsCom::checkATPLUSCGATTcommand ()  {
     char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {
@@ -708,11 +770,12 @@ void gsmGprsCom::checkATPLUSCGATTcommand ()  {
         uartUsb.write( msg, strlen (msg) );  // debug only
         uartUsb.write ( "\r\n",  3 );  // debug only
         #endif
-    }
-    
-    
+    }  
 }
 
+/** 
+* @brief Sends the command AT+CGATT through UART port to the GSM GPRS module
+*/
 void gsmGprsCom::sendATPLUSCGATTcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write( "AT+CGATT=1\r\n");
@@ -721,6 +784,9 @@ void gsmGprsCom::sendATPLUSCGATTcommand ()  {
     this->gsmGprsComState = GSM_GPRS_STATE_ATPLUSCGATT_WAIT_FOR_RESPONSE;
 }
 
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CGREG correctly
+*/
 void gsmGprsCom::checkATPLUSCGREGcommand ()  {
     char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {
@@ -735,6 +801,9 @@ void gsmGprsCom::checkATPLUSCGREGcommand ()  {
     
 }
 
+/** 
+* @brief Sends the command AT+CGREG through UART port to the GSM GPRS module
+*/
 void gsmGprsCom::sendATPLUSCGREGcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write( "AT+CREG?\r\n");
@@ -743,7 +812,11 @@ void gsmGprsCom::sendATPLUSCGREGcommand ()  {
     this->gsmGprsComState =  GSM_GPRS_STATE_ATPLUSCGREG_WAIT_FOR_RESPONSE;
 }
 
-
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CGREG correctly
+* It should respond with a number that identifies the SIM CARD
+*@note precondition the CCID number of the SIM CARD must be charged on the CCID_VERIFICATION MACRO
+*/
 void gsmGprsCom::checkATPLUSCCIDcommand ()  {
     if (checkUARTResponse (CCID_VERIFICATION)) {
         #ifdef DEBUG
@@ -756,6 +829,9 @@ void gsmGprsCom::checkATPLUSCCIDcommand ()  {
     } 
 }
 
+/** 
+* @brief Sends the command AT+CCID through UART port to the GSM GPRS module
+*/
 void gsmGprsCom::sendATPLUSCCIDcommand ()  {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write( "AT+CCID\r\n");
@@ -764,11 +840,10 @@ void gsmGprsCom::sendATPLUSCCIDcommand ()  {
     this->gsmGprsComState =  GSM_GPRS_STATE_ATPLUSCCID_WAIT_FOR_RESPONSE;
 }
 
- /*
- La respuesta es el nivel de perdida de la señal
-si ok respuesta tipo +CSQ: 24
-es un numero de 2 digitos (fijo)
- */
+/** 
+* @brief Checks the UART port if the module has responded to the command AT+CSQ correctly
+* retrieves from UART port the level of signal that the GSM GPRS Module has
+*/
 void gsmGprsCom::checkATPLUSCSQResponse (  ) {
     char stringToCheck [7] = "+CSQ: ";
     char msgStringSignalQuality [9]= "";
@@ -819,6 +894,9 @@ void gsmGprsCom::checkATPLUSCSQResponse (  ) {
     }
 }
 
+/** 
+* @brief Sends the command AT+CSQ through UART port to the GSM GPRS module
+*/
  void gsmGprsCom::sendATPLUSCSQcommand (  ) {
     uartUsb.write ("\r\n ", 3 );  // debug on
     this->write( "AT+CSQ\r\n");
@@ -827,12 +905,18 @@ void gsmGprsCom::checkATPLUSCSQResponse (  ) {
     this->gsmGprsComState =   GSM_GPRS_STATE_ATPLUSCSQ_WAIT_FOR_RESPONSE;
 }
 
+/** 
+* @brief Sends the command AT through UART port to the GSM GPRS module
+*/
  void gsmGprsCom::sendATCommand (  ) {
     this->write( "AT\r\n");
     this->refreshDelay->write( REFRESH_TIME_1000MS );
     this->gsmGprsComState =  GSM_GPRS_STATE_AT_WAIT_FOR_RESPONSE;
 }
 
+/** 
+* @brief Checks the UART port if the module has responded to the command AT correctly
+*/
 void gsmGprsCom::checkATCommandResponse (  ) {
     char expectedResponse [] = "OK";
     if (checkUARTResponse (expectedResponse )) {
@@ -846,11 +930,19 @@ void gsmGprsCom::checkATCommandResponse (  ) {
     } 
 }
 
+/** 
+* @brief sends through UART port a string to the GSM GPRS module
+* @param str the string to be sent
+*/
 void gsmGprsCom::write( const char* str ) {
     this->uartGsmGprs->write( str, strlen(str) );
 }
 
-// Compara caracter pasado como parametro contra caracter recibido por UART
+/** 
+* @brief compares a char received through UART port with a char received as parameter
+* if they are equals the method will return true
+* @param receivedChar the char to be sent
+*/
 bool gsmGprsCom::charRead( char* receivedChar )
 {
     char receivedCharLocal = '\0';
@@ -864,6 +956,11 @@ bool gsmGprsCom::charRead( char* receivedChar )
 }
 
 
+/** 
+* @brief compares a whole string received through UART port with a string received as parameter
+* if they are equals the method will return true
+* @param receivedChar the string to be sent
+*/
 bool gsmGprsCom::checkUARTResponse(const char* stringToCheck)
 {
     static int responseStringPositionIndex = 0;
@@ -884,7 +981,10 @@ bool gsmGprsCom::checkUARTResponse(const char* stringToCheck)
     return moduleResponse;
 }
 
-// debug only
+/** 
+* @brief sends a char through the NUCLEO's USB-UART Port for debugging purpose
+* @param chr the chr to be sent
+*/
 static void pcSerialComCharWrite( char chr )  {
     char str[2] = "";
     sprintf (str, "%c", chr);
